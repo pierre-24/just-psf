@@ -48,7 +48,7 @@ dev = [
 "Source" = "https://github.com/pierre-24/just-psf/"
 
 [project.scripts]
-# none yet!
+'just-psf' = 'just_psf.script:main'
 
 [tool.setuptools]
 packages = ['just_psf']

@@ -259,7 +259,7 @@ class PSFParser:
 
             values = parser(self.current_token.value)
 
-            atom_ids.append(int(values[0]))
+            atom_ids.append(int(values[0]) - 1)  # ids are 0-based in Topology
             seg_names.append(values[1])
             resi_ids.append(int(values[2]))
             resi_names.append(values[3])
@@ -316,4 +316,4 @@ class PSFParser:
         if remaining != 0:
             raise PSFParseError('on line {}: not enough data, {} missing'.format(self.current_token.line, remaining))
 
-        return atm_ids.reshape(n, indices_per) - 1  # indices are 0-based in `Topology`
+        return atm_ids.reshape(n, indices_per) - 1  # ids are 0-based in `Topology`

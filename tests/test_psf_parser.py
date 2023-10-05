@@ -89,7 +89,7 @@ def test_read_atoms_ok():
 
     symb, atyp, chrg, aids, segn, resi, resn, mass, fixd = PSFParser(f).parse_atoms(N, [])
 
-    assert aids == list(a[0] for a in atoms)
+    assert aids == list(a[0] - 1 for a in atoms)  # ids are 0-based!
     assert segn == list(a[1] for a in atoms)
     assert resi == list(a[2] for a in atoms)
     assert resn == list(a[3] for a in atoms)

@@ -125,7 +125,7 @@ class Topology:
         f.write(intformat.format(len(self)) + ' !NATOM\n')
         for i in range(len(self)):
             f.write(atomformat.format(
-                self.atom_ids[i] if self.atom_ids is not None else i + 1,
+                self.atom_ids[i] + 1 if self.atom_ids is not None else i + 1,
                 self.seg_names[i] if self.seg_names is not None else 'SYS',
                 self.resi_ids[i] if self.resi_ids is not None else 1,
                 self.resi_names[i] if self.resi_names is not None else 'X',
