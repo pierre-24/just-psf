@@ -1,7 +1,10 @@
 from typing import Union
 
 import networkx
+import numpy
 from scipy.spatial import distance_matrix
+from typing import Iterable
+import queue
 
 from just_psf import logger
 from just_psf.geometry import Geometry
@@ -112,6 +115,38 @@ COVALENT_RADII = {
 }
 
 
+def find_subgraphs(g: networkx.Graph, k: int) -> Iterable[tuple]:
+    """Find all subgraphs of `g` of size `k` that does not form nor contain a loop.
+    Also report only one of the two symmetric paths (i.e., `i->j->k` and not `k->j->i`).
+    """
+
+    def paths(root: int) -> Iterable[tuple]:
+        """Yield all path of size `k` from `root` in `g` that does not form nor contain a loop.
+        """
+
+        # breadth-first search:
+        q = queue.SimpleQueue()
+        q.put((root,))
+
+        while not q.empty():
+            p = q.get()
+            if len(p) < k:
+                for j in g.adj[p[-1]]:
+                    if j in p:  # avoid loops
+                        continue
+
+                    q.put(p + (j,))
+            else:
+                yield p
+
+    for i in g.nodes:
+        for subgraph in paths(i):
+            if subgraph[-1] < i:  # avoid reversed
+                continue
+
+            yield subgraph
+
+
 class TopologyMaker:
     def __init__(self, geometry: Union[str, Geometry], threshold: float = 1.1):
         if type(geometry) is str:
@@ -126,14 +161,15 @@ class TopologyMaker:
         self.g.add_nodes_from(range(len(geometry)))
 
         # get bonds
-        l_logger.info('compute distances')
         self._guess_bonds(threshold)
 
     def _guess_bonds(self, threshold: float = 1.1):
         """Guess which atom are linked to which using a distance matrix.
         May lead to incorrect results for strange bonds (e.g., metalic)
         """
+        l_logger.info('compute distances')
         distances = distance_matrix(self.geometry.positions, self.geometry.positions)
+        l_logger.info('assign bonds')
         for i in range(len(self.geometry)):
             cri = COVALENT_RADII[self.geometry.symbols[i]]
             for j in range(i + 1, len(self.geometry)):
@@ -143,9 +179,35 @@ class TopologyMaker:
 
     def topology(self) -> Topology:
         """
-        1. Get entities (i.e., subset of the graph with no edges with the rest)
-        2. Run a list of (unique) triplet and quadruplet
-           (with, i.e., i<j<k and i<j<k<l to find all angles and dihedrals)
-        3. Be happy with that and go for Topology ;)
+        Get the corresponding topology
         """
-        pass
+
+        angles = []
+        dihedrals = []
+
+        mol_ids = [0] * len(self.geometry)
+
+        i = 0
+        for indices in networkx.connected_components(self.g):
+            i += 1
+            l_logger.info('* check molecule {} (size = {} atoms)'.format(i, len(indices)))
+            for index in indices:
+                mol_ids[index] = i
+
+            subgraph = self.g.subgraph(indices)
+            l_logger.info('get angles')
+            if len(subgraph.nodes) > 2:
+                angles.extend(find_subgraphs(subgraph, 3))
+            l_logger.info('get dihedrals')
+            if len(subgraph.nodes) > 4:
+                dihedrals.extend(find_subgraphs(subgraph, 4))
+
+        return Topology(
+            atom_names=self.geometry.symbols,
+            atom_types=self.geometry.symbols,
+            atom_ids=list(range(1, len(self.geometry) + 1)),
+            resi_ids=mol_ids,
+            bonds=numpy.array(self.g.edges),
+            angles=numpy.array(angles) if len(angles) > 0 else None,
+            dihedrals=numpy.array(dihedrals) if len(dihedrals) > 0 else None
+        )

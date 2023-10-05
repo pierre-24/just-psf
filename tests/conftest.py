@@ -27,6 +27,14 @@ def geometry_water():
 
 
 @pytest.fixture(scope='module')
+def geometry_7waters():
+    with path_from_tests_files(pathlib.Path('tests_files/7H2O.xyz')).open() as f:
+        geometry = Geometry.from_xyz(f)
+
+    return geometry
+
+
+@pytest.fixture(scope='module')
 def geometry_fluoroethylene():
     with path_from_tests_files(pathlib.Path('tests_files/fluoroethylene.xyz')).open() as f:
         geometry = Geometry.from_xyz(f)

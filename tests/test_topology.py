@@ -15,7 +15,7 @@ def test_topology_fluoroethylene_ok(topology_fluoroethylene):
 def assert_fluoroethylene_topologies_equals(topo1: Topology, topo2: Topology, restricted: bool = False):
     assert len(topo1) == len(topo2)
 
-    assert topo1.symbols == topo2.symbols
+    assert topo1.atom_names == topo2.atom_names
     assert topo1.atom_types == topo2.atom_types
 
     if not restricted:
