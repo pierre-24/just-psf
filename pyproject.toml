@@ -29,6 +29,8 @@ classifiers = [
 
 dependencies = [
     "numpy",
+    "scipy",
+    "networkx"
 ]
 
 [project.optional-dependencies]
