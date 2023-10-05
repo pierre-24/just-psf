@@ -1,7 +1,7 @@
 import numpy
 from numpy.typing import NDArray
 
-from typing import TextIO, List, Self, Optional
+from typing import TextIO, List, Optional
 
 
 class Topology:
@@ -59,7 +59,7 @@ class Topology:
         return len(self.symbols)
 
     @classmethod
-    def from_psf(cls, f: TextIO) -> Self:
+    def from_psf(cls, f: TextIO) -> 'Topology':
         """Read topology from a NAMD PSF file"""
 
         from just_psf.psf_parser import PSFParser

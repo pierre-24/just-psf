@@ -1,6 +1,6 @@
 import numpy
 
-from typing import TextIO, Self
+from typing import TextIO
 from just_psf import logger
 
 
@@ -17,8 +17,8 @@ class Geometry:
     def __len__(self) -> int:
         return len(self.symbols)
 
-    def copy(self) -> Self:
-        """Copy itself. Involves a copy of positions, symbols, and unit cell.
+    def copy(self) -> 'Geometry':
+        """Copy itself. Involves a copy of positions and symbols.
         """
 
         return Geometry(
@@ -27,7 +27,7 @@ class Geometry:
         )
 
     @classmethod
-    def from_xyz(cls, f: TextIO) -> Self:
+    def from_xyz(cls, f: TextIO) -> 'Geometry':
         """Read geometry from a XYZ file
         """
 
