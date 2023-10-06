@@ -1,6 +1,6 @@
 """
 "Just get me a topology, for god’s sake!"
-Create a topology, based on the distance matrix.
+Create a Protein Structure File (PSF), based on the distance matrix.
 """
 
 import argparse
@@ -21,7 +21,7 @@ def main():
     geometry = Geometry.from_xyz(args.infile)
 
     # make topology
-    GeometryAnalyzer(geometry).topology().to_psf(args.output)
+    GeometryAnalyzer(geometry).structure().to_psf(args.output)
 
 
 if __name__ == '__main__':

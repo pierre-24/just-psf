@@ -4,7 +4,11 @@ from numpy.typing import NDArray
 from typing import TextIO, List, Optional
 
 
-class Topology:
+class Structure:
+    """A structure, e.g., something generally found in a PSF file.
+    Sometimes referred to as "topology" ;)
+    """
+
     def __init__(
         self,
         atom_names: List[str],
@@ -56,11 +60,11 @@ class Topology:
         return len(self.atom_names)
 
     @classmethod
-    def from_psf(cls, f: TextIO) -> 'Topology':
+    def from_psf(cls, f: TextIO) -> 'Structure':
         """Read topology from a NAMD PSF file"""
 
         from just_psf.psf_parser import PSFParser
-        return PSFParser(f).topology()
+        return PSFParser(f).structure()
 
     @staticmethod
     def _write_section(f: TextIO, intformat: str, array: numpy.ndarray, title: str, n_per: int, start: int = 1):

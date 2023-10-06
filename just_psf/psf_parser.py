@@ -5,7 +5,7 @@ import numpy
 from numpy.typing import NDArray
 
 from just_psf import logger
-from just_psf.topology import Topology
+from just_psf.structure import Structure
 
 
 l_logger = logger.getChild(__name__)
@@ -37,7 +37,7 @@ class Token:
 
 
 class PSFParser:
-    """Parse a PSF file.
+    """Parse a PSF (Protein Structure File) file.
     Tries to follow as closely as possible the actual PSF format (e.g., fixed length for fields).
     Handle the `NAMD` (but only for the atom section) `EXT` and `XPLOR` flags.
     Does not parse `CHEQ` data (but should not fail to parse the rest!).
@@ -93,8 +93,8 @@ class PSFParser:
 
         self.next()
 
-    def topology(self) -> Topology:
-        l_logger.debug('Parsing topology')
+    def structure(self) -> Structure:
+        l_logger.debug('Parsing structure')
 
         sections = {}
         atoms_section_info = None
@@ -176,8 +176,8 @@ class PSFParser:
         valid_sec_or_raise('NDON')
         valid_sec_or_raise('NACC')
 
-        # return topology
-        return Topology(
+        # return structure
+        return Structure(
             seg_names=seg_names,
             resi_ids=resi_ids,
             resi_names=resi_names,

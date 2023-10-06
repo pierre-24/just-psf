@@ -8,7 +8,7 @@ import queue
 
 from just_psf import logger
 from just_psf.geometry import Geometry
-from just_psf.topology import Topology
+from just_psf.structure import Structure
 
 
 l_logger = logger.getChild(__name__)
@@ -319,9 +319,9 @@ class GeometryAnalyzer:
                 if distances[i, j] < threshold * (cri + crj):
                     self.g.add_edge(i, j)
 
-    def topology(self) -> Topology:
+    def structure(self) -> Structure:
         """
-        Get the corresponding topology
+        Get the corresponding structure
         """
 
         angles = []
@@ -336,7 +336,7 @@ class GeometryAnalyzer:
             angles.extend(component.angles)
             dihedrals.extend(component.dihedrals)
 
-        return Topology(
+        return Structure(
             atom_names=self.geometry.symbols,
             atom_types=self.geometry.symbols,
             resi_ids=mol_ids,

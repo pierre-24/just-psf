@@ -5,7 +5,7 @@ import tempfile
 import numpy
 
 from just_psf.geometry import Geometry
-from just_psf.topology import Topology
+from just_psf.structure import Structure
 
 from tests import path_from_tests_files
 
@@ -43,10 +43,10 @@ def geometry_fluoroethylene():
 
 
 @pytest.fixture(scope='module')
-def topology_water():
+def structure_water():
     """By hand"""
 
-    return Topology(
+    return Structure(
         ['O', 'H', 'H'],
         ['O_3', 'H__HB', 'H__HB'],
         charges=[-.4, .2, .2],
@@ -59,10 +59,10 @@ def topology_water():
 
 
 @pytest.fixture(scope='module')
-def topology_fluoroethylene():
+def structure_fluoroethylene():
     """By hand"""
 
-    return Topology(
+    return Structure(
         ['F', 'C', 'C', 'H', 'H', 'H'],
         ['F_', 'C_2', 'C_2', 'H_', 'H_', 'H_'],
         masses=[19.0, 12.01, 12.01, 1.01, 1.01, 1.01],
@@ -74,7 +74,7 @@ def topology_fluoroethylene():
 
 
 @pytest.fixture(scope='module')
-def topology_fluoroethylene_psf():
+def structure_fluoroethylene_psf():
 
     with path_from_tests_files(pathlib.Path('tests_files/fluoroethylene.psf')).open() as f:
-        return Topology.from_psf(f)
+        return Structure.from_psf(f)

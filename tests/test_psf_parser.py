@@ -127,7 +127,7 @@ def test_parse_incorrect_psf_ko():
         f = StringIO()
         f.write(inp)
         f.seek(0)
-        PSFParser(f).topology()
+        PSFParser(f).structure()
 
     # missing flags line
     with pytest.raises(PSFParseError, match='not a PSF'):
