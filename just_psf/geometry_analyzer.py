@@ -14,8 +14,7 @@ from just_psf.topology import Topology
 l_logger = logger.getChild(__name__)
 
 
-COVALENT_RADII = {
-    # from 10.1039/B801115J
+COVALENT_RADII = {  # from 10.1039/B801115J
     'H': 0.31,
     'He': 0.28,
     'Li': 1.28,
@@ -114,6 +113,127 @@ COVALENT_RADII = {
     'Cm': 1.69,
 }
 
+ATOMIC_WEIGHTS = {  # from https://iupac.qmul.ac.uk/AtWt/
+    'H': 1.008,
+    'He': 4.003,
+    'Li': 6.940,
+    'Be': 9.012,
+    'B': 10.810,
+    'C': 12.011,
+    'N': 14.007,
+    'O': 15.999,
+    'F': 18.998,
+    'Ne': 20.180,
+    'Na': 22.990,
+    'Mg': 24.305,
+    'Al': 26.982,
+    'Si': 28.085,
+    'P': 30.974,
+    'S': 32.060,
+    'Cl': 35.450,
+    'Ar': 39.950,
+    'K': 39.098,
+    'Ca': 40.078,
+    'Sc': 44.956,
+    'Ti': 47.867,
+    'V': 50.942,
+    'Cr': 51.996,
+    'Mn': 54.938,
+    'Fe': 55.845,
+    'Co': 58.933,
+    'Ni': 58.693,
+    'Cu': 63.546,
+    'Zn': 65.380,
+    'Ga': 69.723,
+    'Ge': 72.630,
+    'As': 74.922,
+    'Se': 78.971,
+    'Br': 79.904,
+    'Kr': 83.798,
+    'Rb': 85.468,
+    'Sr': 87.620,
+    'Y': 88.906,
+    'Zr': 91.224,
+    'Nb': 92.906,
+    'Mo': 95.950,
+    'Tc': 97.000,
+    'Ru': 101.070,
+    'Rh': 102.905,
+    'Pd': 106.420,
+    'Ag': 107.868,
+    'Cd': 112.414,
+    'In': 114.818,
+    'Sn': 118.710,
+    'Sb': 121.760,
+    'Te': 127.600,
+    'I': 126.904,
+    'Xe': 131.293,
+    'Cs': 132.905,
+    'Ba': 137.327,
+    'La': 138.905,
+    'Ce': 140.116,
+    'Pr': 140.908,
+    'Nd': 144.242,
+    'Pm': 145.000,
+    'Sm': 150.360,
+    'Eu': 151.964,
+    'Gd': 157.250,
+    'Tb': 158.925,
+    'Dy': 162.500,
+    'Ho': 164.930,
+    'Er': 167.259,
+    'Tm': 168.934,
+    'Yb': 173.045,
+    'Lu': 174.967,
+    'Hf': 178.486,
+    'Ta': 180.948,
+    'W': 183.840,
+    'Re': 186.207,
+    'Os': 190.230,
+    'Ir': 192.217,
+    'Pt': 195.084,
+    'Au': 196.967,
+    'Hg': 200.592,
+    'Tl': 204.380,
+    'Pb': 207.200,
+    'Bi': 208.980,
+    'Po': 209.000,
+    'At': 210.000,
+    'Rn': 222.000,
+    'Fr': 223.000,
+    'Ra': 226.000,
+    'Ac': 227.000,
+    'Th': 232.038,
+    'Pa': 231.036,
+    'U': 238.029,
+    'Np': 237.000,
+    'Pu': 244.000,
+    'Am': 243.000,
+    'Cm': 247.000,
+    'Bk': 247.000,
+    'Cf': 251.000,
+    'Es': 252.000,
+    'Fm': 257.000,
+    'Md': 258.000,
+    'No': 259.000,
+    'Lr': 262.000,
+    'Rf': 267.000,
+    'Db': 270.000,
+    'Sg': 269.000,
+    'Bh': 270.000,
+    'Hs': 270.000,
+    'Mt': 278.000,
+    'Ds': 281.000,
+    'Rg': 281.000,
+    'Cn': 285.000,
+    'Nh': 286.000,
+    'Fl': 289.000,
+    'Mc': 289.000,
+    'Lv': 293.000,
+    'Ts': 293.000,
+    'Og': 294.000,
+}
+
 
 def find_subgraphs(g: networkx.Graph, k: int) -> Iterable[tuple]:
     """Find all subgraphs of `g` of size `k` that does not form nor contain a loop.
@@ -147,7 +267,23 @@ def find_subgraphs(g: networkx.Graph, k: int) -> Iterable[tuple]:
             yield subgraph
 
 
-class TopologyMaker:
+class MolecularSubgraph:
+    """A subgraph which represent a "molecule", i.e., a connected component in said graph.
+    """
+
+    def __init__(self, subgraph: networkx.Graph):
+        self.subgraph = subgraph
+        self.angles = []
+        self.dihedrals = []
+
+        if len(subgraph.nodes) > 2:
+            self.angles = list(find_subgraphs(subgraph, 3))
+
+        if len(subgraph.nodes) > 4:
+            self.dihedrals = list(find_subgraphs(subgraph, 4))
+
+
+class GeometryAnalyzer:
     def __init__(self, geometry: Union[str, Geometry], threshold: float = 1.1):
         if type(geometry) is str:
             with open(geometry) as f:
@@ -157,11 +293,17 @@ class TopologyMaker:
         else:
             raise TypeError('geometry')
 
+        # create graph
         self.g = networkx.Graph()
         self.g.add_nodes_from(range(len(geometry)))
-
-        # get bonds
         self._guess_bonds(threshold)
+
+        # get and analyze connected components
+        self.connected_components = []
+        for indices in networkx.connected_components(self.g):
+            l_logger.info('analyzing component (angles and dihedral)')
+            subgraph = self.g.subgraph(indices)
+            self.connected_components.append(MolecularSubgraph(subgraph))
 
     def _guess_bonds(self, threshold: float = 1.1):
         """Guess which atom are linked to which using a distance matrix.
@@ -187,25 +329,18 @@ class TopologyMaker:
 
         mol_ids = [0] * len(self.geometry)
 
-        i = 0
-        for indices in networkx.connected_components(self.g):
-            i += 1
-            l_logger.info('* check molecule {} (size = {} atoms)'.format(i, len(indices)))
-            for index in indices:
-                mol_ids[index] = i
+        for i, component in enumerate(self.connected_components):
+            for index in component.subgraph.nodes:
+                mol_ids[index] = i + 1  # start at 1 instead of zero
 
-            subgraph = self.g.subgraph(indices)
-            l_logger.info('get angles')
-            if len(subgraph.nodes) > 2:
-                angles.extend(find_subgraphs(subgraph, 3))
-            l_logger.info('get dihedrals')
-            if len(subgraph.nodes) > 4:
-                dihedrals.extend(find_subgraphs(subgraph, 4))
+            angles.extend(component.angles)
+            dihedrals.extend(component.dihedrals)
 
         return Topology(
             atom_names=self.geometry.symbols,
             atom_types=self.geometry.symbols,
             resi_ids=mol_ids,
+            masses=[ATOMIC_WEIGHTS[s] for s in self.geometry.symbols],
             bonds=numpy.array(self.g.edges),
             angles=numpy.array(angles) if len(angles) > 0 else None,
             dihedrals=numpy.array(dihedrals) if len(dihedrals) > 0 else None

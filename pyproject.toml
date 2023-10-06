@@ -48,10 +48,10 @@ dev = [
 "Source" = "https://github.com/pierre-24/just-psf/"
 
 [project.scripts]
-'just-psf' = 'just_psf.script:main'
+'just-psf' = 'just_psf.scripts.just_psf:main'
 
 [tool.setuptools]
-packages = ['just_psf']
+packages = ['just_psf', 'just_psf.scripts']
 
 [tool.setuptools.dynamic]
 version = {attr = "just_psf.__version__"}

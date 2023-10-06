@@ -7,7 +7,7 @@ import argparse
 import sys
 
 from just_psf.geometry import Geometry
-from just_psf.typology_maker import TopologyMaker
+from just_psf.geometry_analyzer import GeometryAnalyzer
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     geometry = Geometry.from_xyz(args.infile)
 
     # make topology
-    TopologyMaker(geometry).topology().to_psf(args.output)
+    GeometryAnalyzer(geometry).topology().to_psf(args.output)
 
 
 if __name__ == '__main__':

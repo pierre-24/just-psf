@@ -1,10 +1,10 @@
 import numpy
 
-from just_psf.typology_maker import TopologyMaker
+from just_psf.geometry_analyzer import GeometryAnalyzer
 
 
 def test_guess_bonds(geometry_fluoroethylene, topology_fluoroethylene):
-    maker = TopologyMaker(geometry_fluoroethylene)
+    maker = GeometryAnalyzer(geometry_fluoroethylene)
 
     # check every bond was found
     for bond in topology_fluoroethylene.bonds:
@@ -12,7 +12,7 @@ def test_guess_bonds(geometry_fluoroethylene, topology_fluoroethylene):
 
 
 def test_topology_make_water(geometry_water, topology_water):
-    maker = TopologyMaker(geometry_water)
+    maker = GeometryAnalyzer(geometry_water)
     auto_topology = maker.topology()
 
     for bond in topology_water.bonds:
@@ -23,7 +23,7 @@ def test_topology_make_water(geometry_water, topology_water):
 
 
 def test_topology_make_fluoroethylene(geometry_fluoroethylene, topology_fluoroethylene_psf):
-    maker = TopologyMaker(geometry_fluoroethylene)
+    maker = GeometryAnalyzer(geometry_fluoroethylene)
     auto_topology = maker.topology()
 
     for bond in topology_fluoroethylene_psf.bonds:
@@ -37,7 +37,7 @@ def test_topology_make_fluoroethylene(geometry_fluoroethylene, topology_fluoroet
 
 
 def test_topology_make_7waters(geometry_7waters):
-    maker = TopologyMaker(geometry_7waters)
+    maker = GeometryAnalyzer(geometry_7waters)
     auto_topology = maker.topology()
 
     assert auto_topology.resi_ids == [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]
