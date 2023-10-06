@@ -205,7 +205,6 @@ class TopologyMaker:
         return Topology(
             atom_names=self.geometry.symbols,
             atom_types=self.geometry.symbols,
-            atom_ids=list(range(len(self.geometry))),
             resi_ids=mol_ids,
             bonds=numpy.array(self.g.edges),
             angles=numpy.array(angles) if len(angles) > 0 else None,

@@ -10,7 +10,6 @@ class Topology:
         atom_names: List[str],
         atom_types: List[str],
         charges: Optional[List[float]] = None,
-        atom_ids: Optional[List[int]] = None,
         seg_names: Optional[List[str]] = None,
         resi_ids: Optional[List[int]] = None,
         resi_names: Optional[List[str]] = None,
@@ -25,7 +24,6 @@ class Topology:
     ):
         assert len(atom_types) == len(atom_names)
         assert charges is None or len(charges) == len(atom_names)
-        assert atom_ids is None or len(atom_ids) == len(atom_names)
         assert seg_names is None or len(seg_names) == len(atom_names)
         assert resi_ids is None or len(resi_ids) == len(atom_names)
         assert resi_names is None or len(resi_names) == len(atom_names)
@@ -38,7 +36,6 @@ class Topology:
         assert donors is None or donors.shape[-1] == 2
         assert acceptors is None or acceptors.shape[-1] == 2
 
-        self.atom_ids = atom_ids
         self.seg_names = seg_names
         self.resi_ids = resi_ids
         self.resi_names = resi_names
@@ -66,7 +63,7 @@ class Topology:
         return PSFParser(f).topology()
 
     @staticmethod
-    def _write_section(f: TextIO, intformat: str, array: numpy.ndarray, title: str, n_per: int):
+    def _write_section(f: TextIO, intformat: str, array: numpy.ndarray, title: str, n_per: int, start: int = 1):
         if array is None:
             f.write(intformat.format(0) + ' !{}\n\n\n'.format(title))
         else:
@@ -77,14 +74,15 @@ class Topology:
                 if i != 0 and i % n_per == 0:
                     f.write('\n')
 
-                f.write(fmt.format(*(array[i] + 1)))
+                f.write(fmt.format(*(array[i] + start)))
 
             f.write('\n\n')
 
-    def to_psf(self, f: TextIO, flags: Optional[List[str]] = None, title: str = ''):
+    def to_psf(self, f: TextIO, flags: Optional[List[str]] = None, title: str = '', start: int = 1):
         """Write a (normally correct) PSF file.
         Handle the `EXT` and `XPLOR` (extended format for atom types) flags.
         Does not report `CHEQ`, but put zeros if any.
+        The first id is given by `start` and follows sequentially.
 
         Inspired by <https://parmed.github.io/ParmEd/html/_modules/parmed/formats/psf.html#PSFFile>.
         """
@@ -125,7 +123,7 @@ class Topology:
         f.write(intformat.format(len(self)) + ' !NATOM\n')
         for i in range(len(self)):
             f.write(atomformat.format(
-                self.atom_ids[i] + 1 if self.atom_ids is not None else i + 1,
+                i + start,
                 self.seg_names[i] if self.seg_names is not None else 'SYS',
                 self.resi_ids[i] if self.resi_ids is not None else 1,
                 self.resi_names[i] if self.resi_names is not None else 'X',
@@ -139,10 +137,10 @@ class Topology:
 
         f.write('\n')
 
-        # the rest
-        self._write_section(f, intformat, self.bonds, 'NBOND: bonds', 4)
-        self._write_section(f, intformat, self.angles, 'NTHETA: angles', 3)
-        self._write_section(f, intformat, self.dihedrals, 'NPHI: dihedrals', 2)
-        self._write_section(f, intformat, self.impropers, 'NIMPHI: impropers', 2)
-        self._write_section(f, intformat, self.donors, 'NDON: donors', 4)
-        self._write_section(f, intformat, self.acceptors, 'NACC: acceptors', 4)
+        # the rest:
+        self._write_section(f, intformat, self.bonds, 'NBOND: bonds', 4, start=start)
+        self._write_section(f, intformat, self.angles, 'NTHETA: angles', 3, start=start)
+        self._write_section(f, intformat, self.dihedrals, 'NPHI: dihedrals', 2, start=start)
+        self._write_section(f, intformat, self.impropers, 'NIMPHI: impropers', 2, start=start)
+        self._write_section(f, intformat, self.donors, 'NDON: donors', 4, start=start)
+        self._write_section(f, intformat, self.acceptors, 'NACC: acceptors', 4, start=start)

@@ -41,6 +41,7 @@ class PSFParser:
     Tries to follow as closely as possible the actual PSF format (e.g., fixed length for fields).
     Handle the `NAMD` (but only for the atom section) `EXT` and `XPLOR` flags.
     Does not parse `CHEQ` data (but should not fail to parse the rest!).
+    Assume that the atom id in the PSF are sequential.
 
     Sources:
     - https://www.ks.uiuc.edu/Training/Tutorials/namd/namd-tutorial-unix-html/node23.html (quick explanation)
@@ -96,7 +97,8 @@ class PSFParser:
         l_logger.debug('Parsing topology')
 
         sections = {}
-        atoms = None
+        atoms_section_info = None
+        first_id = 1  # assume that the first id is 1 (to be changed when NATOM is read)
 
         if not self.current_token.value.startswith('PSF'):
             raise PSFParseError('this is not a PSF file')
@@ -130,9 +132,10 @@ class PSFParser:
                 self.next()
 
                 if title == 'NATOM':
-                    atoms = self.parse_atoms(n, flags)
+                    atoms_section_info = self.parse_atoms(n, flags)
+                    first_id = atoms_section_info[0]
                 else:
-                    sections[title] = self.parse_indices(intsize, n, *self.PARSED_SECTIONS[title])
+                    sections[title] = self.parse_indices(intsize, n, *self.PARSED_SECTIONS[title], first_id=first_id)
 
                 l_logger.debug('... Got {} elements'.format(n))
 
@@ -142,17 +145,53 @@ class PSFParser:
                 self.skip_section()
                 l_logger.debug('Skipped')
 
-        if atoms is None:
+        if atoms_section_info is None:
             raise PSFParseError('missing NATOM section')
 
+        first_id, seg_names, resi_ids, resi_names, atom_names, atom_types, charges, masses, fixed = atoms_section_info
+
+        # check that all indices are within boundary
+        N = len(atom_names)
+
+        def valid_sec_or_raise(name):
+            """If the section exists, check that all indices are in boundary"""
+
+            if name in sections and sections[name] is not None:
+                nfail = sections[name][sections[name] >= N]
+                if len(nfail) > 0:
+                    raise PSFParseError('Error in section {}: indices too large: {}'.format(
+                        name, ','.join(str(x) for x in (nfail + first_id))
+                    ))
+
+                nfail = sections[name][sections[name] < 0]
+                if len(nfail) > 0:
+                    raise PSFParseError('Error in section {}: indices too small: {}'.format(
+                        name, ','.join(str(x) for x in (nfail + first_id))
+                    ))
+
+        valid_sec_or_raise('NBOND')
+        valid_sec_or_raise('NTHETA')
+        valid_sec_or_raise('NPHI')
+        valid_sec_or_raise('NIMPHI')
+        valid_sec_or_raise('NDON')
+        valid_sec_or_raise('NACC')
+
+        # return topology
         return Topology(
-            *atoms,
-            sections.get('NBOND', None),
-            sections.get('NTHETA', None),
-            sections.get('NPHI', None),
-            sections.get('NIMPHI', None),
-            sections.get('NDON', None),
-            sections.get('NACC', None)
+            seg_names=seg_names,
+            resi_ids=resi_ids,
+            resi_names=resi_names,
+            atom_names=atom_names,
+            atom_types=atom_types,
+            charges=charges,
+            masses=masses,
+            fixed=fixed,
+            bonds=sections.get('NBOND', None),
+            angles=sections.get('NTHETA', None),
+            dihedrals=sections.get('NPHI', None),
+            impropers=sections.get('NIMPHI', None),
+            donors=sections.get('NDON', None),
+            acceptors=sections.get('NACC', None)
         )
 
     def skip_section(self):
@@ -168,11 +207,10 @@ class PSFParser:
         Format checked against `charmm/source/io/psfres.F90` (in c47b1).
         """
 
-        atom_ids = []
         seg_names = []
         resi_ids = []
         resi_names = []
-        symbols = []
+        atom_names = []
         atom_types = []
         charges = []
         masses = []
@@ -250,6 +288,8 @@ class PSFParser:
             parser = atom_parsers['STANDARD']
 
         i = 0
+        prev_id = -1
+        first_id = 0
         while self.current_token.type != TokenType.EOF:
             if self.current_token.type == TokenType.EMPTY:
                 break
@@ -259,11 +299,22 @@ class PSFParser:
 
             values = parser(self.current_token.value)
 
-            atom_ids.append(int(values[0]) - 1)  # ids are 0-based in Topology
+            atom_id = int(values[0])
+
+            # check if id are sequential
+            if i > 0:
+                if atom_id - 1 != prev_id:
+                    raise PSFParseError('on line {}: non sequential id'.format(self.current_token.line))
+            else:
+                first_id = atom_id
+
+            prev_id = atom_id
+
+            # fetch data
             seg_names.append(values[1])
             resi_ids.append(int(values[2]))
             resi_names.append(values[3])
-            symbols.append(values[4])
+            atom_names.append(values[4])
             atom_types.append(values[5])
             charges.append(float(values[6]))
             masses.append(float(values[7]))
@@ -275,9 +326,16 @@ class PSFParser:
         if i != n:
             raise PSFParseError('on line {}: not enough atoms, expected {}'.format(self.current_token.line, n))
 
-        return symbols, atom_types, charges, atom_ids, seg_names, resi_ids, resi_names, masses, fixed
+        return first_id, seg_names, resi_ids, resi_names, atom_names, atom_types, charges, masses, fixed
 
-    def parse_indices(self, intsize: int, n: int, indices_per: int, elements_per: int) -> Optional[NDArray[int]]:
+    def parse_indices(
+        self,
+        intsize: int,
+        n: int,
+        indices_per: int,
+        elements_per: int,
+        first_id: int = 1
+    ) -> Optional[NDArray[int]]:
         """Read out `n` elements, each of witch contains `indices_per` indices.
         There are `elements_per` elements per line, written using `intsize` characters.
         """
@@ -316,4 +374,4 @@ class PSFParser:
         if remaining != 0:
             raise PSFParseError('on line {}: not enough data, {} missing'.format(self.current_token.line, remaining))
 
-        return atm_ids.reshape(n, indices_per) - 1  # ids are 0-based in `Topology`
+        return atm_ids.reshape(n, indices_per) - first_id

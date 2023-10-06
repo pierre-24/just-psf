@@ -19,7 +19,6 @@ def assert_fluoroethylene_topologies_equals(topo1: Topology, topo2: Topology, re
     assert topo1.atom_types == topo2.atom_types
 
     if not restricted:
-        assert topo1.atom_ids == topo2.atom_ids
         assert topo1.seg_names == topo2.seg_names
         assert topo1.resi_ids == topo2.resi_ids
         assert topo1.resi_names == topo2.resi_names
@@ -72,6 +71,7 @@ def test_topology_water_write_psf_ok(topology_water):
     f = StringIO()
     topology_water.to_psf(f, ['EXT', 'XPLOR'])  # ext xplor format required, because atom types are longer than 4 chars!
     f.seek(0)
+
     new_topology = Topology.from_psf(f)
 
     assert topology_water.charges == new_topology.charges

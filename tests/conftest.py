@@ -54,7 +54,7 @@ def topology_water():
         bonds=numpy.array([[1, 2], [1, 3]], dtype=int) - 1,
         angles=numpy.array([[2, 1, 3]], dtype=int) - 1,
         donors=numpy.array([[1, 2], [1, 3]], dtype=int) - 1,
-        acceptors=numpy.array([[1, 0]], dtype=int) - 1
+        acceptors=numpy.array([[1, 2]], dtype=int) - 1
     )
 
 
