@@ -64,23 +64,22 @@ class PSFParser:
     def __init__(self, f: TextIO):
         self.source = f
         self.current_token: Optional[Token] = None
+        self.current_line = 0
 
         self.next()
 
     def tokenize(self) -> Iterable[str]:
-
-        n = 1
 
         while True:
             line = self.source.readline()
             if line == '':
                 break
             else:
-                n += 1
+                self.current_line += 1
                 if line == '\n':
-                    yield Token(TokenType.EMPTY, '', n)
+                    yield Token(TokenType.EMPTY, '', self.current_line)
                 else:
-                    yield Token(TokenType.LINE, line[:-1], n)
+                    yield Token(TokenType.LINE, line[:-1], self.current_line)
 
         yield Token(TokenType.EOF, '\0')
 
