@@ -1,7 +1,10 @@
-from typing import Iterator, TextIO, Optional, Callable, List, Tuple, Dict
+import io
+from typing import Iterator, TextIO, Optional, Callable, List, Tuple, Set, Union
 from enum import Enum, unique
 
-from just_psf.topology import Residue
+import numpy
+
+from just_psf.residue_topology import ResidueTopology, ResidueTopologies
 
 
 @unique
@@ -39,15 +42,20 @@ class RTopParseError(Exception):
 
 
 class RTopParser:
-    """Parse a RTop (Residue Topology File) file from CHARMM.
+    """Parse a RTop/RTF (Residue Topology File) file from CHARMM.
+    Also referred to as "toppar" (in CHARMM files).
 
     Sources:
     + http://www.ks.uiuc.edu/Training/Tutorials/science/topology/topology-html/node4.html
     + https://www.charmm-gui.org/?doc=lecture&module=molecules_and_topology&lesson=2
     """
 
-    def __init__(self, f: TextIO):
-        self.input = f.read()
+    def __init__(self, inp: Union[TextIO, str]):
+        if isinstance(inp, io.TextIOBase):
+            self.input = inp.read()  # TODO: is it possible to stream the result like PSF?
+        else:
+            self.input = inp
+
         self.current_token: Optional[Token] = None
         self.current_line = 1
         self.position = 0
@@ -139,31 +147,82 @@ class RTopParser:
         self.next()
         return number
 
-    def topology(self):
+    def topology(self) -> ResidueTopologies:
         """
         TOPOLOGY := HEADER DECLS RESIDUE* END
-        HEADER := TITLE VERSION
+        HEADER := TITLE VERSION (MASS | DECL | DEFA | AUTO)*
+        MASS := 'MASS' INT STRING FLOAT WORD? NL
+        DECL := 'DECL' WORD NL
+        DEFA := 'DEFA' (STRING STRING)* NL
+        AUTO := 'AUTO' WORD* NL
         """
 
+        top_masses = {}
+        top_autogenerate = set()
+        top_decls = set()
+        top_defaults = set()
+
         # header
-        _ = self.title()
-        self.next_non_empty()
-        _ = self.version()
+        self.title()
+        self.version()
         self.next_non_empty()
 
-        # decls
-        _ = self.decls()
+        # a few declarations before the residues
+        while self.current_token.type == TokenType.WORD and self.current_token.value[:4] not in ['RESI', 'END']:
+            keyword = self.current_token.value[:4]
+            self.next()
+            if keyword == 'MASS':
+                self.integer()  # skip id
+
+                atyp = self.word()
+                if atyp in top_masses:
+                    raise RTopParseError(self.current_token, 'a MASS is already defined for `{}`'.format(atyp))
+
+                mass = self.number()
+
+                if self.current_token.type == TokenType.WORD:  # skip mmff
+                    self.next()
+
+                top_masses[atyp] = mass
+            elif keyword == 'AUTO':
+                while self.current_token.type == TokenType.WORD:
+                    top_autogenerate.add(self.word())
+            elif keyword == 'DECL':
+                w = self.word()
+                if w in top_decls:
+                    raise RTopParseError(self.current_token, '`{}` is already DECLared'.format(w))
+                top_decls.add(w)
+            elif keyword == 'DEFA':
+                while self.current_token.type == TokenType.WORD:
+                    top_defaults.add((self.word(), self.word()))
+            else:
+                raise RTopParseError(self.current_token, 'unknown keyword `{}`'.format(keyword))
+
+            if self.current_token.type != TokenType.EOF:
+                self.eat(TokenType.NL)
+                self.next_non_empty()
 
         # residues
+        allowed_types = set(top_masses.keys())
         residues = []
         while self.current_token.type == TokenType.WORD and self.current_token.value[:4] == 'RESI':
-            residues.append(self.residue())
+            residues.append(self.residue(allowed_types, top_decls))
 
+        # normally, there is nothing more:
         end_keyword = self.word()
         if end_keyword != 'END':
             raise RTopParseError(self.current_token, 'expected `END`, got `{}`'.format(end_keyword))
 
+        self.next_non_empty()
         self.eat(TokenType.EOF)
+
+        return ResidueTopologies(
+            masses=top_masses,
+            autogenerate=top_autogenerate,
+            defaults=top_defaults,
+            declarations=top_decls,
+            residues=residues
+        )
 
     def title(self) -> List[str]:
         """
@@ -201,72 +260,70 @@ class RTopParser:
 
         return major_version, minor_version
 
-    def decls(self) -> Tuple[Dict[str, float], List[str], List[Tuple[str, str]], List[str]]:
-        """
-        DECLS := (MASS | DECL | DEFA | AUTO)*
-        MASS := 'MASS' INT STRING FLOAT WORD? NL
-        DECL := 'DECL' WORD NL
-        DEFA := 'DEFA' (STRING STRING)* NL
-        AUTO := 'AUTO' WORD* NL
-        """
-
-        self.expect(TokenType.WORD)
-
-        masses = {}
-        autos = set()
-        decls = set()
-        defas = []
-
-        while self.current_token.type != TokenType.EOF:
-            keyword = self.current_token.value[:4]
-            if keyword == 'RESI':
-                break
-            else:
-                self.next()
-                if keyword == 'MASS':
-                    self.integer()  # skip id
-
-                    atyp = self.word()
-                    if atyp in masses:
-                        raise RTopParseError(self.current_token, 'a MASS is already defined for `{}`'.format(atyp))
-
-                    mass = self.number()
-
-                    if self.current_token.type == TokenType.WORD:  # skip mmff
-                        self.next()
-
-                    masses[atyp] = mass
-                elif keyword == 'AUTO':
-                    while self.current_token.type == TokenType.WORD:
-                        autos.add(self.word())
-                elif keyword == 'DECL':
-                    w = self.word()
-                    if w in decls:
-                        raise RTopParseError(self.current_token, '`{}` is already DECLared'.format(w))
-                    decls.add(w)
-                elif keyword == 'DEFA':
-                    while self.current_token.type == TokenType.WORD:
-                        defas.append((self.word(), self.word()))
-                else:
-                    raise RTopParseError(self.current_token, 'unknown keyword `{}`'.format(keyword))
-
-                if self.current_token.type != TokenType.EOF:
-                    self.eat(TokenType.NL)
-                    self.next_non_empty()
-
-        return masses, list(decls), defas, list(autos)
-
-    def residue(self) -> Residue:
+    def residue(self, allowed_types: Set[str], declarations: Set[str]) -> ResidueTopology:
         """
         RESIDUE := 'RESI' WORD NUMBER NL DEF*
         DEF := ATOM | GROUP | BOND | DOUBLE | IMPR | CMAP | DONOR | ACCEPTOR | IC
         """
 
-        if not self.current_token.type != TokenType.WORD or self.current_token.value[:4] != 'RESI':
+        # TODO: use declarations!
+
+        atom_names = []
+        atom_types = []
+        atom_charges = []
+        bonds = []
+
+        name_to_index = {}
+
+        if self.current_token.type != TokenType.WORD or self.current_token.value[:4] != 'RESI':
             raise RTopParseError(self.current_token, 'expected `RESI`')
 
+        self.next()
         name = self.word()
         charge = self.number()
         self.eat(TokenType.NL)
 
-        return Residue(name, charge)
+        while self.current_token.type == TokenType.WORD and self.current_token.value[:4] not in ['RESI', 'END']:
+            keyword = self.current_token.value[:4]
+            self.next()
+
+            if keyword == 'ATOM':
+                aname = self.word()
+                if aname in name_to_index:
+                    raise Exception('an atom with name `{}` already exists'.format(aname))
+                name_to_index[aname] = len(atom_names)
+                atom_names.append(aname)
+
+                atype = self.word()
+                if atype not in allowed_types:
+                    raise RTopParseError(self.current_token, 'unknown atom type `{}`'.format(atype))
+                atom_types.append(atype)
+
+                atom_charges.append(self.number())
+
+            elif keyword in ['BOND', 'DOUB']:
+                while self.current_token.type == TokenType.WORD:
+                    a1, a2 = self.word(), self.word()
+                    try:
+                        bonds.append((name_to_index[a1], name_to_index[a2]))
+                    except KeyError as e:
+                        raise Exception('unknown atom name `{}` in bond'.format(e))
+
+            elif keyword in ['GROU', 'IC', 'IMPR', 'CMAP', 'DONO', 'ACCE']:  # just skip
+                while self.current_token.type == TokenType.WORD:
+                    self.next()
+            else:
+                raise RTopParseError(self.current_token, 'unknown keyword `{}` in RESI'.format(keyword))
+
+            if self.current_token.type != TokenType.EOF:
+                self.eat(TokenType.NL)
+                self.next_non_empty()
+
+        return ResidueTopology(
+            resi_name=name,
+            resi_charge=charge,
+            atom_names=atom_names,
+            atom_types=atom_types,
+            atom_charges=atom_charges,
+            bonds=numpy.array(bonds).reshape((-1, 2))
+        )
