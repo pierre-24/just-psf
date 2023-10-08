@@ -49,6 +49,7 @@ dev = [
 
 [project.scripts]
 'just-psf' = 'just_psf.scripts.just_psf:main'
+'just-rtf' = 'just_psf.scripts.just_rtf:main'
 
 [tool.setuptools]
 packages = ['just_psf', 'just_psf.scripts']

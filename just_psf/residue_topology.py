@@ -1,4 +1,4 @@
-from typing import List, Dict, Set, Tuple, Optional
+from typing import List, Dict, Set, Tuple, Optional, TextIO
 from numpy.typing import NDArray
 
 
@@ -104,3 +104,6 @@ class ResidueTopologies:
         r += 'END\n'
 
         return r
+
+    def to_rtop(self, f: TextIO, version: int = 19):
+        f.write(self.as_rtop(version))

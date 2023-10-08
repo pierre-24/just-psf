@@ -41,7 +41,7 @@ class PSFParser:
     Tries to follow as closely as possible the actual PSF format (e.g., fixed length for fields).
     Handle the `NAMD` (but only for the atom section) `EXT` and `XPLOR` flags.
     Does not parse `CHEQ` data (but should not fail to parse the rest!).
-    Assume that the atom id in the PSF are sequential.
+    Assume that the atom ids in the PSF are sequential.
 
     Sources:
     - https://www.ks.uiuc.edu/Training/Tutorials/namd/namd-tutorial-unix-html/node23.html (quick explanation)
