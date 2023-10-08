@@ -16,3 +16,10 @@ __status__ = 'Development'
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get('LOGLEVEL', 'WARNING').upper())
+
+
+# error
+class ParseError(Exception):
+    def __init__(self, token, msg: str):
+        super().__init__('on line {}: {}'.format(token.line, msg))
+        self.token = token

@@ -4,14 +4,14 @@ from enum import Enum, unique
 import numpy
 from numpy.typing import NDArray
 
-from just_psf import logger
+from just_psf import logger, ParseError
 from just_psf.structure import Structure
 
 
 l_logger = logger.getChild(__name__)
 
 
-class PSFParseError(Exception):
+class PSFParseError(ParseError):
     pass
 
 
@@ -88,7 +88,7 @@ class PSFParser:
 
     def next_if_empty_or_raises(self):
         if self.current_token.type not in [TokenType.EMPTY, TokenType.EOF]:
-            raise PSFParseError('on line {}: expected empty line'.format(self.current_token.line))
+            raise PSFParseError(self.current_token, 'expected empty line')
 
         self.next()
 
@@ -100,7 +100,7 @@ class PSFParser:
         first_id = 1  # assume that the first id is 1 (to be changed when NATOM is read)
 
         if not self.current_token.value.startswith('PSF'):
-            raise PSFParseError('this is not a PSF file')
+            raise PSFParseError(self.current_token, 'this is not a PSF file')
 
         flags = self.current_token.value.split()[1:]
         self.next()
@@ -113,20 +113,19 @@ class PSFParser:
             # read section:
             pos = self.current_token.value.find('!')
             if pos < 0:
-                raise PSFParseError('on line {}: expected section'.format(self.current_token.line))
+                raise PSFParseError(self.current_token, 'expected section')
 
             title = self.current_token.value[pos + 1:]
             if ':' in title:
                 title = title[:title.index(':')]
 
-            l_logger.debug('Found section `{}`'.format(title))
+            l_logger.debug('Parsing section `{}`...'.format(title))
 
             if title in self.PARSED_SECTIONS:
-                l_logger.debug('Parsing...')
                 try:
                     n = int(self.current_token.value[:intsize])
                 except ValueError:
-                    raise PSFParseError('on line {}: incorrectly formatted section'.format(self.current_token.line))
+                    raise PSFParseError(self.current_token, 'incorrectly formatted section')
 
                 self.next()
 
@@ -145,7 +144,7 @@ class PSFParser:
                 l_logger.debug('Skipped')
 
         if atoms_section_info is None:
-            raise PSFParseError('missing NATOM section')
+            raise PSFParseError(self.current_token, 'missing NATOM section')
 
         first_id, seg_names, resi_ids, resi_names, atom_names, atom_types, charges, masses, fixed = atoms_section_info
 
@@ -158,13 +157,13 @@ class PSFParser:
             if name in sections and sections[name] is not None:
                 nfail = sections[name][sections[name] >= N]
                 if len(nfail) > 0:
-                    raise PSFParseError('Error in section {}: indices too large: {}'.format(
+                    raise PSFParseError(self.current_token, 'error in section {}: indices too large: {}'.format(
                         name, ','.join(str(x) for x in (nfail + first_id))
                     ))
 
                 nfail = sections[name][sections[name] < 0]
                 if len(nfail) > 0:
-                    raise PSFParseError('Error in section {}: indices too small: {}'.format(
+                    raise PSFParseError(self.current_token, 'error in section {}: indices too small: {}'.format(
                         name, ','.join(str(x) for x in (nfail + first_id))
                     ))
 
@@ -294,7 +293,7 @@ class PSFParser:
                 break
 
             if i >= n:
-                raise PSFParseError('on line {}: too much atoms, expected {}'.format(self.current_token.line, n))
+                raise PSFParseError(self.current_token, 'too much atoms, expected {}'.format(n))
 
             values = parser(self.current_token.value)
 
@@ -303,7 +302,7 @@ class PSFParser:
             # check if id are sequential
             if i > 0:
                 if atom_id - 1 != prev_id:
-                    raise PSFParseError('on line {}: non sequential id'.format(self.current_token.line))
+                    raise PSFParseError(self.current_token, 'non sequential id')
             else:
                 first_id = atom_id
 
@@ -323,7 +322,7 @@ class PSFParser:
             self.next()
 
         if i != n:
-            raise PSFParseError('on line {}: not enough atoms, expected {}'.format(self.current_token.line, n))
+            raise PSFParseError(self.current_token, 'not enough atoms, {} expected, got {}'.format(n, i))
 
         return first_id, seg_names, resi_ids, resi_names, atom_names, atom_types, charges, masses, fixed
 
@@ -352,25 +351,24 @@ class PSFParser:
                 break
 
             if remaining == 0:
-                raise PSFParseError('on line {}: too much data, got already {}'.format(self.current_token.line, n))
+                raise PSFParseError(self.current_token, 'too much data, got already {}'.format(n))
 
             to_read = min(elements_per * indices_per, remaining * indices_per)
 
             if len(self.current_token.value) != to_read * intsize:
-                raise PSFParseError('on line {}: incorrect number of indices, expected {}'.format(
-                    self.current_token.line, to_read))
+                raise PSFParseError(self.current_token, 'incorrect number of indices, expected {}'.format(to_read))
 
             try:
                 atm_ids[i:i + to_read] = numpy.int64(
                     tuple(self.current_token.value[j * intsize:(j + 1) * intsize] for j in range(to_read)))
             except ValueError:
-                raise PSFParseError('on line {}: unable to parse indices'.format(self.current_token.line))
+                raise PSFParseError(self.current_token, 'unable to parse indices')
 
             i += to_read
             remaining -= to_read // indices_per
             self.next()
 
         if remaining != 0:
-            raise PSFParseError('on line {}: not enough data, {} missing'.format(self.current_token.line, remaining))
+            raise PSFParseError(self.current_token, 'not enough data, {} missing'.format(remaining))
 
         return atm_ids.reshape(n, indices_per) - first_id

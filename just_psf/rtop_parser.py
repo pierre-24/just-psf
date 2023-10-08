@@ -4,7 +4,7 @@ from enum import Enum, unique
 
 import numpy
 
-from just_psf import logger
+from just_psf import logger, ParseError
 from just_psf.residue_topology import ResidueTopology, ResidueTopologies
 
 
@@ -39,10 +39,8 @@ class Token:
         )
 
 
-class RTopParseError(Exception):
-    def __init__(self, token: Token, msg: str):
-        super().__init__('on line {}: {}'.format(token.line, msg))
-        self.token = token
+class RTopParseError(ParseError):
+    pass
 
 
 class RTopParser:
