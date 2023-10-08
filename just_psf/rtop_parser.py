@@ -185,8 +185,10 @@ class RTopParser:
 
                 top_masses[atyp] = mass
             elif keyword == 'AUTO':
+                autogen = []
                 while self.current_token.type == TokenType.WORD:
-                    top_autogenerate.add(self.word())
+                    autogen.append(self.word())
+                top_autogenerate.add(tuple(autogen))
             elif keyword == 'DECL':
                 w = self.word()
                 if w in top_decls:

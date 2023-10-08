@@ -227,9 +227,9 @@ class PSFParser:
                 # 1X
                 li[19:23].strip(),  # A4 resi_name
                 # 1X
-                li[24:28].strip(),  # A4 symbols
+                li[24:28].strip(),  # A4 atom_name
                 # 1X
-                li[29:33].strip(),  # A4  atom_type
+                li[29:33].strip(),  # A4 atom_type
                 # 1X
                 li[34:48], li[48:62],  # 2G14.6 charge mass
                 li[62:70]),  # I8 fixed
@@ -244,7 +244,7 @@ class PSFParser:
                 # 1X
                 li[29:37].strip(),  # A8 resi_name
                 # 1X
-                li[38:46].strip(),  # A8 symbol
+                li[38:46].strip(),  # A8 atom_name
                 # 1X
                 li[47:51].strip(),  # A4 atom_type
                 # 1X
@@ -262,7 +262,7 @@ class PSFParser:
                 # 1X
                 li[29:37].strip(),  # A8 resi_name
                 # 1X
-                li[38:46].strip(),  # A8 symbol
+                li[38:46].strip(),  # A8 atom_name
                 # 1X
                 li[47:53].strip(),  # A6 atom_type
                 # 1X
