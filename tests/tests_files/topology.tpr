@@ -1,0 +1,107 @@
+* Excerpt from https://www.charmm-gui.org/?doc=open_toppar&filename=top_all36_prot.rtf
+* with ALA, ARG.
+*
+36  1
+
+AUTOGENERATE ANGLE DIHE
+
+MASS  -1  H          1.00800 ! polar H
+MASS  -1  HC         1.00800 ! N-ter H
+MASS  -1  HA         1.00800 ! nonpolar H
+MASS  -1  HB1        1.00800 ! backbone H
+MASS  -1  HB2        1.00800 ! aliphatic backbone H, to CT2
+MASS  -1  HA1        1.00800 ! alkane, CH, new LJ params (see toppar_all22_prot_aliphatic_c27.str)
+MASS  -1  HA2        1.00800 ! alkane, CH2, new LJ params (see toppar_all22_prot_aliphatic_c27.str)
+MASS  -1  HA3        1.00800 ! alkane, CH3, new LJ params (see toppar_all22_prot_aliphatic_c27.str)
+MASS  -1  C         12.01100 ! carbonyl C, peptide backbone
+MASS  -1  CA        12.01100 ! aromatic C
+MASS  -1  CT1       12.01100 ! aliphatic sp3 C for CH
+MASS  -1  CT2       12.01100 ! aliphatic sp3 C for CH2
+MASS  -1  CT3       12.01100 ! aliphatic sp3 C for CH3
+MASS  -1  N         14.00700 ! proline N
+MASS  -1  NH1       14.00700 ! peptide nitrogen
+MASS  -1  NH2       14.00700 ! amide nitrogen
+MASS  -1  NH3       14.00700 ! ammonium nitrogen
+MASS  -1  NC2       14.00700 ! guanidinium nitrogen
+MASS  -1  O         15.99940 ! carbonyl oxygen
+MASS  -1  OC        15.99940 ! carboxylate oxygen
+
+DECL -C
+DECL +N
+DEFA FIRS NTER LAST CTER
+AUTO ANGLES DIHE PATCH
+
+RESI ALA          0.00
+GROUP
+ATOM N    NH1    -0.47  !     |
+ATOM HN   H       0.31  !  HN-N
+ATOM CA   CT1     0.07  !     |     HB1
+ATOM HA   HB1     0.09  !     |    /
+GROUP                   !  HA-CA--CB-HB2
+ATOM CB   CT3    -0.27  !     |    \
+ATOM HB1  HA3     0.09  !     |     HB3
+ATOM HB2  HA3     0.09  !   O=C
+ATOM HB3  HA3     0.09  !     |
+GROUP                   !
+ATOM C    C       0.51
+ATOM O    O      -0.51
+BOND CB CA  N  HN  N  CA
+BOND C  CA  C  +N  CA HA  CB HB1  CB HB2  CB HB3
+DOUBLE O  C
+IMPR N -C CA HN  C CA +N O
+CMAP -C  N  CA  C   N  CA  C  +N
+DONOR HN N
+ACCEPTOR O C
+IC -C   CA   *N   HN    1.3551 126.4900  180.0000 115.4200  0.9996
+IC -C   N    CA   C     1.3551 126.4900  180.0000 114.4400  1.5390
+IC N    CA   C    +N    1.4592 114.4400  180.0000 116.8400  1.3558
+IC +N   CA   *C   O     1.3558 116.8400  180.0000 122.5200  1.2297
+IC CA   C    +N   +CA   1.5390 116.8400  180.0000 126.7700  1.4613
+IC N    C    *CA  CB    1.4592 114.4400  123.2300 111.0900  1.5461
+IC N    C    *CA  HA    1.4592 114.4400 -120.4500 106.3900  1.0840
+IC C    CA   CB   HB1   1.5390 111.0900  177.2500 109.6000  1.1109
+IC HB1  CA   *CB  HB2   1.1109 109.6000  119.1300 111.0500  1.1119
+IC HB1  CA   *CB  HB3   1.1109 109.6000 -119.5800 111.6100  1.1114
+
+RESI ARG          1.00
+GROUP
+ATOM N    NH1    -0.47  !     |                      HH11
+ATOM HN   H       0.31  !  HN-N                       |
+ATOM CA   CT1     0.07  !     |   HB1 HG1 HD1 HE     NH1-HH12
+ATOM HA   HB1     0.09  !     |   |   |   |   |    //(+)
+GROUP                   !  HA-CA--CB--CG--CD--NE--CZ
+ATOM CB   CT2    -0.18  !     |   |   |   |         \
+ATOM HB1  HA2     0.09  !     |   HB2 HG2 HD2        NH2-HH22
+ATOM HB2  HA2     0.09  !   O=C                       |
+GROUP                   !     |                      HH21
+ATOM CG   CT2    -0.18
+ATOM HG1  HA2     0.09
+ATOM HG2  HA2     0.09
+GROUP
+ATOM CD   CT2     0.20
+ATOM HD1  HA2     0.09
+ATOM HD2  HA2     0.09
+ATOM NE   NC2    -0.70
+ATOM HE   HC      0.44
+ATOM CZ   C       0.64
+ATOM NH1  NC2    -0.80
+ATOM HH11 HC      0.46
+ATOM HH12 HC      0.46
+ATOM NH2  NC2    -0.80
+ATOM HH21 HC      0.46
+ATOM HH22 HC      0.46
+GROUP
+ATOM C    C       0.51
+ATOM O    O      -0.51
+BOND CB  CA  CG  CB  CD CG  NE CD  CZ NE
+BOND NH2 CZ  N  HN  N  CA
+BOND C   CA  C  +N  CA HA  CB HB1
+BOND CB  HB2 CG  HG1 CG HG2 CD HD1 CD HD2
+BOND NE  HE  NH1 HH11  NH1 HH12  NH2 HH21  NH2 HH22
+DOUBLE O  C    CZ  NH1
+! REMOVED IMPR
+! REMOVED DONOR
+! REMOVED ACCEPTOR
+! REMOVED CMAP
+
+END

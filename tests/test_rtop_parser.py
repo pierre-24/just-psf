@@ -1,10 +1,12 @@
 import io
+import pathlib
 
 import numpy
 import pytest
 
 
 from just_psf.rtop_parser import RTopParser, RTopParseError
+from tests import path_from_tests_files
 
 
 def test_parse_title_ok():
@@ -65,19 +67,22 @@ def test_parse_header():
 
 
 def test_parse_residue():
-    parser = RTopParser('RESI TEST 0.0\nATOM C CH3 0.0\nATOM H1 HC 0.0\nBOND C H1\nEND')
-    residue = parser.residue({'CH3', 'HC'}, set())
+    parser = RTopParser('RESI TEST 0.0\nATOM C CH3 0.0\nATOM H1 HC 0.0\nATOM H2 HC 0.0\nBOND C H1 C H2 -C C C +C\nEND')
+    residue = parser.residue({'CH3', 'HC'}, ['-C', '+C'])
 
     assert residue.resi_name == 'TEST'
     assert residue.resi_charge == .0
-    assert residue.atom_names == ['C', 'H1']
-    assert residue.atom_types == ['CH3', 'HC']
-    assert residue.atom_charges == [.0, .0]
-    assert numpy.allclose(residue.bonds, [(0, 1)])
+    assert residue.atom_names == ['C', 'H1', 'H2']
+    assert residue.atom_types == ['CH3', 'HC', 'HC']
+    assert residue.atom_charges == [.0, .0, .0]
+    assert numpy.allclose(residue.bonds, [(0, 1), (0, 2), (-1, 0), (0, -2)])
 
     assert parser.current_token.value == 'END'
 
 
 def test_parse_topology():
-    parser = RTopParser('19 1\nRESI TEST 0.0\nEND')  # tbc!
-    parser.topology()
+    with path_from_tests_files(pathlib.Path('tests_files/topology.tpr')).open() as f:
+        parser = RTopParser(f)
+        topology = parser.topology()
+
+    assert [r.resi_name for r in topology.residues] == ['ALA', 'ARG']

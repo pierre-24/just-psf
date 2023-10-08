@@ -159,7 +159,7 @@ class RTopParser:
 
         top_masses = {}
         top_autogenerate = set()
-        top_decls = set()
+        top_decls = []
         top_defaults = set()
 
         # header
@@ -191,7 +191,7 @@ class RTopParser:
                 w = self.word()
                 if w in top_decls:
                     raise RTopParseError(self.current_token, '`{}` is already DECLared'.format(w))
-                top_decls.add(w)
+                top_decls.append(w)
             elif keyword == 'DEFA':
                 while self.current_token.type == TokenType.WORD:
                     top_defaults.add((self.word(), self.word()))
@@ -260,13 +260,11 @@ class RTopParser:
 
         return major_version, minor_version
 
-    def residue(self, allowed_types: Set[str], declarations: Set[str]) -> ResidueTopology:
+    def residue(self, allowed_types: Set[str], declarations: List[str]) -> ResidueTopology:
         """
         RESIDUE := 'RESI' WORD NUMBER NL DEF*
         DEF := ATOM | GROUP | BOND | DOUBLE | IMPR | CMAP | DONOR | ACCEPTOR | IC
         """
-
-        # TODO: use declarations!
 
         atom_names = []
         atom_types = []
@@ -274,6 +272,8 @@ class RTopParser:
         bonds = []
 
         name_to_index = {}
+        for i, n in enumerate(declarations):
+            name_to_index[n] = -1 - i
 
         if self.current_token.type != TokenType.WORD or self.current_token.value[:4] != 'RESI':
             raise RTopParseError(self.current_token, 'expected `RESI`')
@@ -309,7 +309,7 @@ class RTopParser:
                     except KeyError as e:
                         raise Exception('unknown atom name `{}` in bond'.format(e))
 
-            elif keyword in ['GROU', 'IC', 'IMPR', 'CMAP', 'DONO', 'ACCE']:  # just skip
+            elif keyword in ['GROU', 'IC', 'IMPR', 'CMAP', 'DONO', 'ACCE', 'PATC']:  # just skip
                 while self.current_token.type == TokenType.WORD:
                     self.next()
             else:
