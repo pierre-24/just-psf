@@ -4,7 +4,11 @@ from enum import Enum, unique
 
 import numpy
 
+from just_psf import logger
 from just_psf.residue_topology import ResidueTopology, ResidueTopologies
+
+
+l_logger = logger.getChild(__name__)
 
 
 @unique
@@ -156,6 +160,7 @@ class RTopParser:
         DEFA := 'DEFA' (STRING STRING)* NL
         AUTO := 'AUTO' WORD* NL
         """
+        l_logger.debug('Parsing topology')
 
         top_masses = {}
         top_autogenerate = set()
@@ -164,7 +169,9 @@ class RTopParser:
 
         # header
         self.title()
-        self.version()
+        major, minor = self.version()
+        l_logger.debug('Rtop v{}.{}'.format(major, minor))
+
         self.next_non_empty()
 
         # a few declarations before the residues
@@ -217,6 +224,8 @@ class RTopParser:
 
         self.next_non_empty()
         self.eat(TokenType.EOF)
+
+        l_logger.debug('Done')
 
         return ResidueTopologies(
             masses=top_masses,
@@ -284,6 +293,8 @@ class RTopParser:
         name = self.word()
         charge = self.number()
         self.eat(TokenType.NL)
+
+        l_logger.debug('Parsing residue `{}`'.format(name))
 
         while self.current_token.type == TokenType.WORD and self.current_token.value[:4] not in ['RESI', 'END']:
             keyword = self.current_token.value[:4]

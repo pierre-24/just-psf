@@ -60,7 +60,7 @@ class ResidueTopologies:
         self,
         masses: Dict[str, float],
         defaults: Set[Tuple[str, str]],
-        autogenerate: Set[str],
+        autogenerate: Set[tuple],
         declarations: List[str],
         residues: List[ResidueTopology]
     ):
