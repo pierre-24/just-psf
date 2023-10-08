@@ -8,6 +8,7 @@ import queue
 
 from just_psf import logger
 from just_psf.geometry import Geometry
+from just_psf.residue_topology import ResidueTopologies, ResidueTopology
 from just_psf.structure import Structure
 
 
@@ -282,6 +283,9 @@ class MolecularSubgraph:
         if len(subgraph.nodes) > 4:
             self.dihedrals = list(find_subgraphs(subgraph, 4))
 
+    def __len__(self):
+        return len(self.subgraph.nodes)
+
 
 class GeometryAnalyzer:
     def __init__(self, geometry: Union[str, Geometry], threshold: float = 1.1):
@@ -344,4 +348,29 @@ class GeometryAnalyzer:
             bonds=numpy.array(self.g.edges),
             angles=numpy.array(angles) if len(angles) > 0 else None,
             dihedrals=numpy.array(dihedrals) if len(dihedrals) > 0 else None
+        )
+
+    def topology(self) -> ResidueTopologies:
+        """Get a topology. Each independent component is a residue
+        """
+
+        uniq_elements = set(self.geometry.symbols)
+
+        residues = []
+        i = 0
+        for component in self.connected_components:
+            i += 1
+            residues.append(ResidueTopology(
+                resi_name='MOL{}'.format(i),
+                resi_charge=.0,
+                atom_types=[self.geometry.symbols[i] for i in component.subgraph.nodes],
+                atom_names=['{}{}'.format(self.geometry.symbols[i], i + 1) for i in component.subgraph.nodes],
+                atom_charges=[.0] * len(component),
+                bonds=numpy.array(component.subgraph.edges)
+            ))
+
+        return ResidueTopologies(
+            masses=dict((k, ATOMIC_WEIGHTS[k]) for k in uniq_elements),
+            autogenerate={('ANGLE', 'DIHE')},
+            residues=residues,
         )
