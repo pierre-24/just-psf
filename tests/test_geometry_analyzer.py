@@ -68,17 +68,10 @@ def test_topology_make_fluoroethylene_ok(geometry_fluoroethylene, structure_fluo
         assert bond in auto_topology.residues[0].bonds or reversed(bond) in auto_topology.residues[0].bonds
 
 
-def test_structure_make_7waters_ok(geometry_7waters):
+def test_structure_make_7waters_ok(geometry_7waters, structure_7water_psf):
     maker = GeometryAnalyzer(geometry_7waters)
     auto_structure = maker.structure()
 
-    assert auto_structure.resi_ids == [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]
-    assert numpy.all(auto_structure.angles == [
-        (1, 0, 2),
-        (4, 3, 5),
-        (7, 6, 8),
-        (10, 9, 11),
-        (13, 12, 14),
-        (16, 15, 17),
-        (19, 18, 20)
-    ])
+    assert auto_structure.resi_ids == structure_7water_psf.resi_ids
+    assert numpy.allclose(auto_structure.bonds, structure_7water_psf.bonds)
+    assert numpy.allclose(auto_structure.angles, structure_7water_psf.angles)

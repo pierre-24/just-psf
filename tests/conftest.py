@@ -78,3 +78,10 @@ def structure_fluoroethylene_psf():
 
     with path_from_tests_files(pathlib.Path('tests_files/fluoroethylene.psf')).open() as f:
         return Structure.from_psf(f)
+
+
+@pytest.fixture(scope='module')
+def structure_7water_psf():
+
+    with path_from_tests_files(pathlib.Path('tests_files/7H2O.psf')).open() as f:
+        return Structure.from_psf(f)

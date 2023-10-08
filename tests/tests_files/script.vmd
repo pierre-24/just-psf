@@ -1,0 +1,10 @@
+# script to generate 7H2O.psf
+# run `vmd -eofexit < script.vmd`
+topology H2O.rtf
+
+pdbalias residue HOH MOL1
+segment SYS {
+    pdb 7H2O.pdb
+}
+
+writepsf 7H2O.psf
