@@ -21,7 +21,7 @@ def main():
     geometry = Geometry.from_xyz(args.infile)
 
     # make topology
-    GeometryAnalyzer(geometry).structure().to_psf(args.output)
+    GeometryAnalyzer(geometry).structure().to_psf(args.output, flags=['EXT', 'XPLOR'])
 
 
 if __name__ == '__main__':

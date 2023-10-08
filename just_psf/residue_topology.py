@@ -80,8 +80,11 @@ class ResidueTopologies:
         r += '\n'
 
         # defaults
-        for default in self.defaults:
-            r += 'DEFA {}\n'.format(' '.join(default))
+        if len(self.defaults) > 0:
+            r += 'DEFA'
+            for default in self.defaults:
+                r += ' {} {}'.format(*default)
+            r += '\n'
 
         # autogenerate
         for autogen in self.autogenerate:

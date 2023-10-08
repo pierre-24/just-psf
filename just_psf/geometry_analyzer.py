@@ -277,11 +277,14 @@ class MolecularSubgraph:
         self.angles = []
         self.dihedrals = []
 
-        if len(subgraph.nodes) > 2:
-            self.angles = list(find_subgraphs(subgraph, 3))
+    def autogenerate_angles_dihedrals(self):
+        l_logger.debug('Generate angles and dihedrals')
 
-        if len(subgraph.nodes) > 4:
-            self.dihedrals = list(find_subgraphs(subgraph, 4))
+        if len(self.subgraph.nodes) > 2:
+            self.angles = list(find_subgraphs(self.subgraph, 3))
+
+        if len(self.subgraph.nodes) > 4:
+            self.dihedrals = list(find_subgraphs(self.subgraph, 4))
 
     def __len__(self):
         return len(self.subgraph.nodes)
@@ -305,17 +308,18 @@ class GeometryAnalyzer:
         # get and analyze connected components
         self.connected_components = []
         for indices in networkx.connected_components(self.g):
-            l_logger.info('analyzing component (angles and dihedral)')
-            subgraph = self.g.subgraph(indices)
-            self.connected_components.append(MolecularSubgraph(subgraph))
+            self.connected_components.append(MolecularSubgraph(self.g.subgraph(indices)))
+
+        l_logger.info('found {} connected component(s)'.format(len(self.connected_components)))
 
     def _guess_bonds(self, threshold: float = 1.1):
         """Guess which atom are linked to which using a distance matrix.
         May lead to incorrect results for strange bonds (e.g., metalic)
         """
-        l_logger.info('compute distances')
+        l_logger.debug('compute distances')
         distances = distance_matrix(self.geometry.positions, self.geometry.positions)
-        l_logger.info('assign bonds')
+
+        l_logger.debug('assign bonds')
         for i in range(len(self.geometry)):
             cri = COVALENT_RADII[self.geometry.symbols[i]]
             for j in range(i + 1, len(self.geometry)):
@@ -323,27 +327,33 @@ class GeometryAnalyzer:
                 if distances[i, j] < threshold * (cri + crj):
                     self.g.add_edge(i, j)
 
-    def structure(self) -> Structure:
+    def structure(self, seg_name: str = 'SYS') -> Structure:
         """
-        Get the corresponding structure
+        Get the corresponding structure.
+        Each connected component is considered as a residue
         """
 
         angles = []
         dihedrals = []
 
-        mol_ids = [0] * len(self.geometry)
+        resi_ids = [0] * len(self.geometry)
+        resi_names = ['X'] * len(self.geometry)
 
         for i, component in enumerate(self.connected_components):
             for index in component.subgraph.nodes:
-                mol_ids[index] = i + 1  # start at 1 instead of zero
+                resi_ids[index] = i + 1  # start at 1 instead of zero
+                resi_names[index] = 'MOL{}'.format(i + 1)
 
+            component.autogenerate_angles_dihedrals()
             angles.extend(component.angles)
             dihedrals.extend(component.dihedrals)
 
         return Structure(
-            atom_names=self.geometry.symbols,
+            seg_names=[seg_name] * len(self.geometry),
             atom_types=self.geometry.symbols,
-            resi_ids=mol_ids,
+            atom_names=['{}{}'.format(self.geometry.symbols[i], i + 1) for i in range(len(self.geometry))],
+            resi_ids=resi_ids,
+            resi_names=resi_names,
             masses=[ATOMIC_WEIGHTS[s] for s in self.geometry.symbols],
             bonds=numpy.array(self.g.edges),
             angles=numpy.array(angles) if len(angles) > 0 else None,
@@ -372,5 +382,6 @@ class GeometryAnalyzer:
         return ResidueTopologies(
             masses=dict((k, ATOMIC_WEIGHTS[k]) for k in uniq_elements),
             autogenerate={('ANGLE', 'DIHE')},
+            defaults={('FIRST', 'NONE'), ('LAST', 'NONE')},
             residues=residues,
         )
