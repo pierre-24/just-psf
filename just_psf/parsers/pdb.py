@@ -2,8 +2,8 @@ import numpy
 
 from just_psf import logger
 from just_psf.geometry import PDBGeometry
-from just_psf.parser import ParseError
-from just_psf.parser.line import TokenType, LineParser
+from just_psf.parsers import ParseError
+from just_psf.parsers.line import TokenType, LineParser
 
 
 l_logger = logger.getChild(__name__)

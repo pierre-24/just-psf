@@ -5,7 +5,7 @@ import numpy
 import pytest
 
 
-from just_psf.parser.rtop import RTopParser, RTopParseError
+from just_psf.parsers.rtop import RTopParser, RTopParseError
 from tests import path_from_tests_files
 
 

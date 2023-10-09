@@ -1,7 +1,7 @@
 from typing import TextIO, Iterator, Optional
 
 from enum import Enum, unique
-from just_psf.parser import ParseError
+from just_psf.parsers import ParseError
 
 
 @unique

@@ -5,7 +5,7 @@ from enum import Enum, unique
 import numpy
 
 from just_psf import logger
-from just_psf.parser import ParseError
+from just_psf.parsers import ParseError
 
 from just_psf.residue_topology import ResidueTopology, Topologies
 

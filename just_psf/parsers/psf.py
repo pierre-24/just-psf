@@ -3,8 +3,8 @@ import numpy
 from numpy.typing import NDArray
 
 from just_psf import logger
-from just_psf.parser import ParseError
-from just_psf.parser.line import TokenType, LineParser
+from just_psf.parsers import ParseError
+from just_psf.parsers.line import TokenType, LineParser
 from just_psf.structure import Structure
 
 
@@ -226,17 +226,17 @@ class PSFParser(LineParser):
         }
 
         if 'NAMD' in flags:
-            l_logger.debug('will use NAMD parser')
+            l_logger.debug('will use NAMD parsers')
             parser = atom_parsers['NAMD']
         elif 'EXT' in flags:
             if 'XPLOR' in flags:
-                l_logger.debug('will use EXTENDED_XPLOR parser')
+                l_logger.debug('will use EXTENDED_XPLOR parsers')
                 parser = atom_parsers['EXTENDED_XPLOR']
             else:
-                l_logger.debug('will use EXTENDED parser')
+                l_logger.debug('will use EXTENDED parsers')
                 parser = atom_parsers['EXTENDED']
         else:
-            l_logger.debug('will use STANDARD parser')
+            l_logger.debug('will use STANDARD parsers')
             parser = atom_parsers['STANDARD']
 
         i = 0

@@ -5,7 +5,7 @@ from typing import TextIO
 import numpy
 import pytest
 
-from just_psf.parser.psf import PSFParser, PSFParseError
+from just_psf.parsers.psf import PSFParser, PSFParseError
 
 
 def random_indices(f: TextIO, intsize: int, n: int, indices_per: int, elements_per: int, excess: int = 0):

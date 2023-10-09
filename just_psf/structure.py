@@ -63,7 +63,7 @@ class Structure:
     def from_psf(cls, f: TextIO) -> 'Structure':
         """Read topology from a NAMD PSF file"""
 
-        from just_psf.parser.psf import PSFParser
+        from just_psf.parsers.psf import PSFParser
         return PSFParser(f).structure()
 
     @staticmethod

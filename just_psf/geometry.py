@@ -83,5 +83,5 @@ class PDBGeometry(Geometry):
 
     @classmethod
     def from_pdb(cls, f: TextIO) -> 'PDBGeometry':
-        from just_psf.parser.pdb import PDBParser
+        from just_psf.parsers.pdb import PDBParser
         return PDBParser(f).pdb()
