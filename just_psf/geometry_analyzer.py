@@ -315,6 +315,7 @@ class GeometryAnalyzer:
         self.resi_isomorphic_to = {}
         self.atom_isomorphic_to = [-1] * len(self.geometry)
 
+        # get unique residues and match the others to them
         self.uniq_residues = []
         current_resi_id = -1
         for indices in networkx.connected_components(self.g):
@@ -331,7 +332,7 @@ class GeometryAnalyzer:
                 )
                 if gm.is_isomorphic():
                     uniq_resi_id = i
-                    mapping = gm.mapping
+                    mapping = gm.mapping  # This mapping is not unique, though
                     break
 
             if uniq_resi_id < 0:
@@ -354,7 +355,7 @@ class GeometryAnalyzer:
                     uresi_ai + 1
                 )
 
-        l_logger.info('found {} connected component(s) and {} unique(s)'.format(
+        l_logger.info('found {} residue(s) and {} unique residue(s)'.format(
             current_resi_id, len(self.uniq_residues)))
 
     def _guess_bonds(self, threshold: float = 1.1):
@@ -376,7 +377,7 @@ class GeometryAnalyzer:
     def structure(self, seg_name: str = 'SYS') -> Structure:
         """
         Get the corresponding structure.
-        Each connected component is considered as a residue.
+        Each unique set of connected components is considered as a residue.
         """
 
         angles = []
@@ -410,7 +411,7 @@ class GeometryAnalyzer:
     def topologies(self) -> Topologies:
         """
         Get a set of topologies.
-        Each independent component is converted in a residue.
+        Each unique set of independent components is converted into a residue.
         """
 
         uniq_elements = set(self.geometry.symbols)
