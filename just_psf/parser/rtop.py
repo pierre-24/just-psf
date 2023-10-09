@@ -4,7 +4,9 @@ from enum import Enum, unique
 
 import numpy
 
-from just_psf import logger, ParseError
+from just_psf import logger
+from just_psf.parser import ParseError
+
 from just_psf.residue_topology import ResidueTopology, Topologies
 
 
@@ -46,6 +48,8 @@ class RTopParseError(ParseError):
 class RTopParser:
     """Parse a RTop/RTF (Residue Topology(ies) File) file from CHARMM.
     Also referred to as "toppar" (in CHARMM files).
+
+    Do not parse `GROU`, `IC`, `IMPR`, `CMAP`, `DONO`, `ACCE`, `PATC`, but just skip them.
 
     Sources:
     + http://www.ks.uiuc.edu/Training/Tutorials/science/topology/topology-html/node4.html

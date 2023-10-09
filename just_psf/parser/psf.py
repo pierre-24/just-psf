@@ -1,10 +1,10 @@
-from typing import TextIO, Iterable, Optional
-
-from enum import Enum, unique
+from typing import Optional
 import numpy
 from numpy.typing import NDArray
 
-from just_psf import logger, ParseError
+from just_psf import logger
+from just_psf.parser import ParseError
+from just_psf.parser.line import TokenType, LineParser
 from just_psf.structure import Structure
 
 
@@ -15,28 +15,7 @@ class PSFParseError(ParseError):
     pass
 
 
-@unique
-class TokenType(Enum):
-    LINE = 'LIN'
-    EMPTY = 'EMP'
-    EOF = 'EOF'
-
-
-class Token:
-    def __init__(self, type: TokenType, value: str, line: int = -1):
-        self.type = type
-        self.value = value
-        self.line = line
-
-    def __repr__(self):
-        return '<Token({},{}{})>'.format(
-            self.type,
-            repr(self.value),
-            '' if self.line < 0 else ', {}'.format(self.line)
-        )
-
-
-class PSFParser:
+class PSFParser(LineParser):
     """Parse a PSF (Protein Structure File) file.
     Tries to follow as closely as possible the actual PSF format (e.g., fixed length for fields).
     Handle the `NAMD` (but only for the atom section) `EXT` and `XPLOR` flags.
@@ -60,31 +39,6 @@ class PSFParser:
         'NDON': (2, 4),
         'NACC': (2, 4)
     }
-
-    def __init__(self, f: TextIO):
-        self.source = f
-        self.current_token: Optional[Token] = None
-        self.current_line = 0
-
-        self.next()
-
-    def tokenize(self) -> Iterable[str]:
-
-        while True:
-            line = self.source.readline()
-            if line == '':
-                break
-            else:
-                self.current_line += 1
-                if line == '\n':
-                    yield Token(TokenType.EMPTY, '', self.current_line)
-                else:
-                    yield Token(TokenType.LINE, line[:-1], self.current_line)
-
-        yield Token(TokenType.EOF, '\0')
-
-    def next(self):
-        self.current_token = next(self.tokenize())
 
     def next_if_empty_or_raises(self):
         if self.current_token.type not in [TokenType.EMPTY, TokenType.EOF]:

@@ -1,6 +1,7 @@
 import numpy
+from typing import TextIO, List, Optional
+from numpy.typing import NDArray
 
-from typing import TextIO
 from just_psf import logger
 
 
@@ -8,7 +9,7 @@ l_logger = logger.getChild(__name__)
 
 
 class Geometry:
-    def __init__(self, symbols: list, positions: numpy.ndarray):
+    def __init__(self, symbols: List[str], positions: NDArray[float]):
         assert positions.shape == (len(symbols), 3)
 
         self.symbols = symbols
@@ -56,3 +57,31 @@ class Geometry:
             r += '\n{:2} {: .7f} {: .7f} {: .7f}'.format(self.symbols[i], *self.positions[i])
 
         return r
+
+
+class PDBGeometry(Geometry):
+    def __init__(
+        self,
+        symbols: List[str],
+        positions: NDArray[float],
+        seg_names: Optional[List[str]] = None,
+        resi_ids: Optional[List[int]] = None,
+        resi_names: Optional[list[str]] = None,
+        atom_types: Optional[List[str]] = None,
+    ):
+        super().__init__(symbols, positions)
+
+        assert seg_names is None or len(seg_names) == len(symbols)
+        assert resi_ids is None or len(resi_ids) == len(symbols)
+        assert resi_names is None or len(resi_names) == len(symbols)
+        assert atom_types is None or len(atom_types) == len(symbols)
+
+        self.seg_names = seg_names
+        self.resi_ids = resi_ids
+        self.resi_names = resi_names
+        self.atom_types = atom_types
+
+    @classmethod
+    def from_pdb(cls, f: TextIO) -> 'PDBGeometry':
+        from just_psf.parser.pdb import PDBParser
+        return PDBParser(f).pdb()

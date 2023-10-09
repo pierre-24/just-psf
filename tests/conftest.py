@@ -4,7 +4,7 @@ import pytest
 import tempfile
 import numpy
 
-from just_psf.geometry import Geometry
+from just_psf.geometry import Geometry, PDBGeometry
 from just_psf.structure import Structure
 
 from tests import path_from_tests_files
@@ -30,6 +30,14 @@ def geometry_water():
 def geometry_7waters():
     with path_from_tests_files(pathlib.Path('tests_files/7H2O.xyz')).open() as f:
         geometry = Geometry.from_xyz(f)
+
+    return geometry
+
+
+@pytest.fixture(scope='module')
+def geometry_7waters_pdb():
+    with path_from_tests_files(pathlib.Path('tests_files/7H2O.pdb')).open() as f:
+        geometry = PDBGeometry.from_pdb(f)
 
     return geometry
 
