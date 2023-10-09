@@ -2,7 +2,7 @@
 # run `vmd -eofexit < script.vmd`
 topology H2O.rtf
 
-pdbalias residue HOH MOL1
+pdbalias residue HOH RES1
 segment SYS {
     pdb 7H2O.pdb
 }

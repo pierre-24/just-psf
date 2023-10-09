@@ -30,7 +30,7 @@ def test_topology_make_water(geometry_water, structure_water):
     assert auto_topology.autogenerate == {('ANGLE', 'DIHE')}
 
     assert len(auto_topology.residues) == 1
-    assert auto_topology.residues[0].resi_name == 'MOL1'
+    assert auto_topology.residues[0].resi_name == 'RES1'
     assert auto_topology.residues[0].atom_types == ['O', 'H', 'H']
     assert auto_topology.residues[0].atom_names == ['O1', 'H2', 'H3']
 
@@ -60,7 +60,7 @@ def test_topology_make_fluoroethylene_ok(geometry_fluoroethylene, structure_fluo
     assert auto_topology.autogenerate == {('ANGLE', 'DIHE')}
 
     assert len(auto_topology.residues) == 1
-    assert auto_topology.residues[0].resi_name == 'MOL1'
+    assert auto_topology.residues[0].resi_name == 'RES1'
     assert auto_topology.residues[0].atom_types == ['F', 'C', 'C', 'H', 'H', 'H']
     assert auto_topology.residues[0].atom_names == ['F1', 'C2', 'C3', 'H4', 'H5', 'H6']
 
@@ -70,8 +70,12 @@ def test_topology_make_fluoroethylene_ok(geometry_fluoroethylene, structure_fluo
 
 def test_structure_make_7waters_ok(geometry_7waters, structure_7water_psf):
     maker = GeometryAnalyzer(geometry_7waters)
+    assert len(maker.uniq_residues) == 1
+
     auto_structure = maker.structure()
 
+    assert set(auto_structure.resi_names) == {'RES1'}  # all residues correspond to one
     assert auto_structure.resi_ids == structure_7water_psf.resi_ids
+    assert auto_structure.resi_names == structure_7water_psf.resi_names
     assert numpy.allclose(auto_structure.bonds, structure_7water_psf.bonds)
     assert numpy.allclose(auto_structure.angles, structure_7water_psf.angles)

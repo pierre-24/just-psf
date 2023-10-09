@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List, Tuple
 
 import networkx
 import numpy
@@ -274,17 +274,20 @@ class MolecularSubgraph:
 
     def __init__(self, subgraph: networkx.Graph):
         self.subgraph = subgraph
-        self.angles = []
-        self.dihedrals = []
 
-    def autogenerate_angles_dihedrals(self):
+    def autogenerate_angles_dihedrals(self) -> Tuple[List[Tuple[int, int, int]], List[Tuple[int, int, int, int]]]:
         l_logger.debug('Generate angles and dihedrals')
 
+        angles = []
+        dihedrals = []
+
         if len(self.subgraph.nodes) > 2:
-            self.angles = list(find_subgraphs(self.subgraph, 3))
+            angles = list(find_subgraphs(self.subgraph, 3))
 
         if len(self.subgraph.nodes) > 3:
-            self.dihedrals = list(find_subgraphs(self.subgraph, 4))
+            dihedrals = list(find_subgraphs(self.subgraph, 4))
+
+        return angles, dihedrals
 
     def __len__(self):
         return len(self.subgraph.nodes)
@@ -302,18 +305,57 @@ class GeometryAnalyzer:
 
         # create graph
         self.g = networkx.Graph()
-        self.g.add_nodes_from(range(len(geometry)))
+        self.g.add_nodes_from((i, {'symbol': self.geometry.symbols[i]}) for i in range(len(geometry)))
         self._guess_bonds(threshold)
 
-        # add names
-        self.atom_names = ['{}{}'.format(self.geometry.symbols[i], i + 1) for i in range(len(self.geometry))]
-
         # get and analyze connected components
-        self.connected_components = []
-        for indices in networkx.connected_components(self.g):
-            self.connected_components.append(MolecularSubgraph(self.g.subgraph(indices)))
+        self.atom_names = [''] * len(self.geometry)
+        self.resi_ids = [0] * len(self.geometry)
 
-        l_logger.info('found {} connected component(s)'.format(len(self.connected_components)))
+        self.resi_isomorphic_to = {}
+        self.atom_isomorphic_to = [-1] * len(self.geometry)
+
+        self.uniq_residues = []
+        current_resi_id = -1
+        for indices in networkx.connected_components(self.g):
+            current_resi_id += 1
+            subgraph = self.g.subgraph(indices)
+
+            # tries to match the current residue to another
+            uniq_resi_id = -1
+            for i, uniq in enumerate(self.uniq_residues):
+                gm = networkx.isomorphism.GraphMatcher(
+                    uniq.subgraph,
+                    subgraph,
+                    node_match=networkx.isomorphism.categorical_node_match('symbol', 'X')
+                )
+                if gm.is_isomorphic():
+                    uniq_resi_id = i
+                    mapping = gm.mapping
+                    break
+
+            if uniq_resi_id < 0:
+                uniq_resi_id = len(self.uniq_residues)
+                mapping = dict((i, i) for i in indices)
+                self.uniq_residues.append(MolecularSubgraph(subgraph))
+
+            # store isomorphism
+            if uniq_resi_id not in self.resi_isomorphic_to:
+                self.resi_isomorphic_to[uniq_resi_id] = []
+
+            self.resi_isomorphic_to[uniq_resi_id].append(mapping)
+
+            # fill resi_id and atom_names
+            for uresi_ai, resi_ai in mapping.items():
+                self.atom_isomorphic_to[resi_ai] = uresi_ai
+                self.resi_ids[resi_ai] = current_resi_id + 1
+                self.atom_names[resi_ai] = '{}{}'.format(
+                    self.geometry.symbols[uresi_ai],
+                    uresi_ai + 1
+                )
+
+        l_logger.info('found {} connected component(s) and {} unique(s)'.format(
+            current_resi_id, len(self.uniq_residues)))
 
     def _guess_bonds(self, threshold: float = 1.1):
         """
@@ -340,23 +382,24 @@ class GeometryAnalyzer:
         angles = []
         dihedrals = []
 
-        resi_ids = [0] * len(self.geometry)
         resi_names = ['X'] * len(self.geometry)
 
-        for i, component in enumerate(self.connected_components):
-            for index in component.subgraph.nodes:
-                resi_ids[index] = i + 1  # start at 1 instead of zero
-                resi_names[index] = 'MOL{}'.format(i + 1)
+        for i, component in enumerate(self.uniq_residues):
+            resi_angs, resi_dihe = component.autogenerate_angles_dihedrals()
+            for mp in self.resi_isomorphic_to[i]:
+                # assign resi name
+                for ai in mp.values():
+                    resi_names[ai] = 'RES{}'.format(i + 1)
 
-            component.autogenerate_angles_dihedrals()
-            angles.extend(component.angles)
-            dihedrals.extend(component.dihedrals)
+                # add angles using mapping
+                angles.extend((mp[i], mp[j], mp[k]) for i, j, k in resi_angs)
+                dihedrals.extend((mp[i], mp[j], mp[k], mp[l]) for i, j, k, l in resi_dihe)
 
         return Structure(
             seg_names=[seg_name] * len(self.geometry),
             atom_types=self.geometry.symbols,
             atom_names=self.atom_names,
-            resi_ids=resi_ids,
+            resi_ids=self.resi_ids,
             resi_names=resi_names,
             masses=[ATOMIC_WEIGHTS[s] for s in self.geometry.symbols],
             bonds=numpy.array(self.g.edges),
@@ -374,15 +417,15 @@ class GeometryAnalyzer:
 
         residues = []
         i = 0
-        for component in self.connected_components:
+        for residue in self.uniq_residues:
             i += 1
             residues.append(ResidueTopology(
-                resi_name='MOL{}'.format(i),
+                resi_name='RES{}'.format(i),
                 resi_charge=.0,
-                atom_types=[self.geometry.symbols[i] for i in component.subgraph.nodes],
-                atom_names=[self.atom_names[i] for i in component.subgraph.nodes],
-                atom_charges=[.0] * len(component),
-                bonds=numpy.array(component.subgraph.edges)
+                atom_types=[self.geometry.symbols[i] for i in residue.subgraph.nodes],
+                atom_names=[self.atom_names[i] for i in residue.subgraph.nodes],
+                atom_charges=[.0] * len(residue),
+                bonds=numpy.array(residue.subgraph.edges)
             ))
 
         return Topologies(

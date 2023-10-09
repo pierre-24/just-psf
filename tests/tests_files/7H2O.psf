@@ -6,27 +6,27 @@ PSF
  REMARKS segment SYS { first NONE; last NONE; auto angles dihedrals }
 
       21 !NATOM
-       1 SYS  1    MOL1 O1   O      0.000000       15.9990           0
-       2 SYS  1    MOL1 H2   H      0.000000        1.0080           0
-       3 SYS  1    MOL1 H3   H      0.000000        1.0080           0
-       4 SYS  2    MOL1 O1   O      0.000000       15.9990           0
-       5 SYS  2    MOL1 H2   H      0.000000        1.0080           0
-       6 SYS  2    MOL1 H3   H      0.000000        1.0080           0
-       7 SYS  3    MOL1 O1   O      0.000000       15.9990           0
-       8 SYS  3    MOL1 H2   H      0.000000        1.0080           0
-       9 SYS  3    MOL1 H3   H      0.000000        1.0080           0
-      10 SYS  4    MOL1 O1   O      0.000000       15.9990           0
-      11 SYS  4    MOL1 H2   H      0.000000        1.0080           0
-      12 SYS  4    MOL1 H3   H      0.000000        1.0080           0
-      13 SYS  5    MOL1 O1   O      0.000000       15.9990           0
-      14 SYS  5    MOL1 H2   H      0.000000        1.0080           0
-      15 SYS  5    MOL1 H3   H      0.000000        1.0080           0
-      16 SYS  6    MOL1 O1   O      0.000000       15.9990           0
-      17 SYS  6    MOL1 H2   H      0.000000        1.0080           0
-      18 SYS  6    MOL1 H3   H      0.000000        1.0080           0
-      19 SYS  7    MOL1 O1   O      0.000000       15.9990           0
-      20 SYS  7    MOL1 H2   H      0.000000        1.0080           0
-      21 SYS  7    MOL1 H3   H      0.000000        1.0080           0
+       1 SYS  1    RES1 O1   O      0.000000       15.9990           0
+       2 SYS  1    RES1 H2   H      0.000000        1.0080           0
+       3 SYS  1    RES1 H3   H      0.000000        1.0080           0
+       4 SYS  2    RES1 O1   O      0.000000       15.9990           0
+       5 SYS  2    RES1 H2   H      0.000000        1.0080           0
+       6 SYS  2    RES1 H3   H      0.000000        1.0080           0
+       7 SYS  3    RES1 O1   O      0.000000       15.9990           0
+       8 SYS  3    RES1 H2   H      0.000000        1.0080           0
+       9 SYS  3    RES1 H3   H      0.000000        1.0080           0
+      10 SYS  4    RES1 O1   O      0.000000       15.9990           0
+      11 SYS  4    RES1 H2   H      0.000000        1.0080           0
+      12 SYS  4    RES1 H3   H      0.000000        1.0080           0
+      13 SYS  5    RES1 O1   O      0.000000       15.9990           0
+      14 SYS  5    RES1 H2   H      0.000000        1.0080           0
+      15 SYS  5    RES1 H3   H      0.000000        1.0080           0
+      16 SYS  6    RES1 O1   O      0.000000       15.9990           0
+      17 SYS  6    RES1 H2   H      0.000000        1.0080           0
+      18 SYS  6    RES1 H3   H      0.000000        1.0080           0
+      19 SYS  7    RES1 O1   O      0.000000       15.9990           0
+      20 SYS  7    RES1 H2   H      0.000000        1.0080           0
+      21 SYS  7    RES1 H3   H      0.000000        1.0080           0
 
       14 !NBOND: bonds
        1       2       1       3       4       5       4       6
@@ -35,7 +35,7 @@ PSF
       19      20      19      21
 
        7 !NTHETA: angles
-       2       1       3       5       4       6       8       7       9
+       2       1       3       5       4       6       9       7       8
       11      10      12      14      13      15      17      16      18
       20      19      21
 
