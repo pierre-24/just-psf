@@ -52,7 +52,7 @@ dev = [
 'just-rtf' = 'just_psf.scripts.just_rtf:main'
 
 [tool.setuptools]
-packages = ['just_psf', 'just_psf.scripts']
+packages = ['just_psf', 'just_psf.scripts', 'just_psf.parser']
 
 [tool.setuptools.dynamic]
 version = {attr = "just_psf.__version__"}
