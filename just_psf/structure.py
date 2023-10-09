@@ -6,7 +6,7 @@ from typing import TextIO, List, Optional
 
 class Structure:
     """A structure, e.g., something generally found in a PSF file.
-    Sometimes referred to as "topology" ;)
+    Sometimes referred to as "topology" as well ;)
     """
 
     def __init__(

@@ -8,7 +8,7 @@ import queue
 
 from just_psf import logger
 from just_psf.geometry import Geometry
-from just_psf.residue_topology import ResidueTopologies, ResidueTopology
+from just_psf.residue_topology import Topologies, ResidueTopology
 from just_psf.structure import Structure
 
 
@@ -283,7 +283,7 @@ class MolecularSubgraph:
         if len(self.subgraph.nodes) > 2:
             self.angles = list(find_subgraphs(self.subgraph, 3))
 
-        if len(self.subgraph.nodes) > 4:
+        if len(self.subgraph.nodes) > 3:
             self.dihedrals = list(find_subgraphs(self.subgraph, 4))
 
     def __len__(self):
@@ -305,6 +305,9 @@ class GeometryAnalyzer:
         self.g.add_nodes_from(range(len(geometry)))
         self._guess_bonds(threshold)
 
+        # add names
+        self.atom_names = ['{}{}'.format(self.geometry.symbols[i], i + 1) for i in range(len(self.geometry))]
+
         # get and analyze connected components
         self.connected_components = []
         for indices in networkx.connected_components(self.g):
@@ -313,7 +316,8 @@ class GeometryAnalyzer:
         l_logger.info('found {} connected component(s)'.format(len(self.connected_components)))
 
     def _guess_bonds(self, threshold: float = 1.1):
-        """Guess which atom are linked to which using a distance matrix.
+        """
+        Guess which atom are linked to which using a distance matrix.
         May lead to incorrect results for strange bonds (e.g., metalic)
         """
         l_logger.debug('compute distances')
@@ -330,7 +334,7 @@ class GeometryAnalyzer:
     def structure(self, seg_name: str = 'SYS') -> Structure:
         """
         Get the corresponding structure.
-        Each connected component is considered as a residue
+        Each connected component is considered as a residue.
         """
 
         angles = []
@@ -351,7 +355,7 @@ class GeometryAnalyzer:
         return Structure(
             seg_names=[seg_name] * len(self.geometry),
             atom_types=self.geometry.symbols,
-            atom_names=['{}{}'.format(self.geometry.symbols[i], i + 1) for i in range(len(self.geometry))],
+            atom_names=self.atom_names,
             resi_ids=resi_ids,
             resi_names=resi_names,
             masses=[ATOMIC_WEIGHTS[s] for s in self.geometry.symbols],
@@ -360,8 +364,10 @@ class GeometryAnalyzer:
             dihedrals=numpy.array(dihedrals) if len(dihedrals) > 0 else None
         )
 
-    def topology(self) -> ResidueTopologies:
-        """Get a topology. Each independent component is a residue
+    def topologies(self) -> Topologies:
+        """
+        Get a set of topologies.
+        Each independent component is converted in a residue.
         """
 
         uniq_elements = set(self.geometry.symbols)
@@ -374,12 +380,12 @@ class GeometryAnalyzer:
                 resi_name='MOL{}'.format(i),
                 resi_charge=.0,
                 atom_types=[self.geometry.symbols[i] for i in component.subgraph.nodes],
-                atom_names=['{}{}'.format(self.geometry.symbols[i], i + 1) for i in component.subgraph.nodes],
+                atom_names=[self.atom_names[i] for i in component.subgraph.nodes],
                 atom_charges=[.0] * len(component),
                 bonds=numpy.array(component.subgraph.edges)
             ))
 
-        return ResidueTopologies(
+        return Topologies(
             masses=dict((k, ATOMIC_WEIGHTS[k]) for k in uniq_elements),
             autogenerate={('ANGLE', 'DIHE')},
             defaults={('FIRST', 'NONE'), ('LAST', 'NONE')},

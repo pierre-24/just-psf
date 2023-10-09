@@ -55,7 +55,7 @@ class ResidueTopology:
         return r
 
 
-class ResidueTopologies:
+class Topologies:
     def __init__(
         self,
         masses: Dict[str, float],

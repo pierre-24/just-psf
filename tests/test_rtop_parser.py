@@ -56,7 +56,7 @@ def test_parse_headers_ok():
     f.seek(0)
 
     parser = RTopParser(f)
-    topology = parser.topology()
+    topology = parser.topologies()
 
     assert topology.declarations == decls
     assert topology.defaults == defas
@@ -98,12 +98,12 @@ def test_parse_residue_ok():
 def test_parse_topology_ok():
     with path_from_tests_files(pathlib.Path('tests_files/topology.tpr')).open() as f:
         parser = RTopParser(f)
-        topology = parser.topology()
+        topology = parser.topologies()
 
     assert [r.resi_name for r in topology.residues] == ['ALA', 'ARG']
 
     parser = RTopParser(topology.as_rtop())
-    topology2 = parser.topology()
+    topology2 = parser.topologies()
 
     assert topology.masses.keys() == topology2.masses.keys()
     assert topology.defaults == topology2.defaults

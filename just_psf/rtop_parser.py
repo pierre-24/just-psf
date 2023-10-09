@@ -5,7 +5,7 @@ from enum import Enum, unique
 import numpy
 
 from just_psf import logger, ParseError
-from just_psf.residue_topology import ResidueTopology, ResidueTopologies
+from just_psf.residue_topology import ResidueTopology, Topologies
 
 
 l_logger = logger.getChild(__name__)
@@ -44,7 +44,7 @@ class RTopParseError(ParseError):
 
 
 class RTopParser:
-    """Parse a RTop/RTF (Residue Topology File) file from CHARMM.
+    """Parse a RTop/RTF (Residue Topology(ies) File) file from CHARMM.
     Also referred to as "toppar" (in CHARMM files).
 
     Sources:
@@ -149,7 +149,7 @@ class RTopParser:
         self.next()
         return number
 
-    def topology(self) -> ResidueTopologies:
+    def topologies(self) -> Topologies:
         """
         TOPOLOGY := HEADER DECLS RESIDUE* END
         HEADER := TITLE VERSION (MASS | DECL | DEFA | AUTO)*
@@ -158,7 +158,8 @@ class RTopParser:
         DEFA := 'DEFA' (STRING STRING)* NL
         AUTO := 'AUTO' WORD* NL
         """
-        l_logger.debug('Parsing topology')
+
+        l_logger.debug('Parsing topologies')
 
         top_masses = {}
         top_autogenerate = set()
@@ -225,7 +226,7 @@ class RTopParser:
 
         l_logger.debug('Done')
 
-        return ResidueTopologies(
+        return Topologies(
             masses=top_masses,
             autogenerate=top_autogenerate,
             defaults=top_defaults,

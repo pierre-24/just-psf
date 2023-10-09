@@ -24,7 +24,7 @@ def test_structure_make_water_ok(geometry_water, structure_water):
 
 def test_topology_make_water(geometry_water, structure_water):
     maker = GeometryAnalyzer(geometry_water)
-    auto_topology = maker.topology()
+    auto_topology = maker.topologies()
 
     assert auto_topology.masses.keys() == {'H', 'O'}
     assert auto_topology.autogenerate == {('ANGLE', 'DIHE')}
@@ -54,7 +54,7 @@ def test_structure_make_fluoroethylene_ok(geometry_fluoroethylene, structure_flu
 
 def test_topology_make_fluoroethylene_ok(geometry_fluoroethylene, structure_fluoroethylene_psf):
     maker = GeometryAnalyzer(geometry_fluoroethylene)
-    auto_topology = maker.topology()
+    auto_topology = maker.topologies()
 
     assert auto_topology.masses.keys() == {'C', 'H', 'F'}
     assert auto_topology.autogenerate == {('ANGLE', 'DIHE')}

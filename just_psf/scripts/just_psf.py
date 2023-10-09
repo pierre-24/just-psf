@@ -21,6 +21,7 @@ def main():
     geometry = Geometry.from_xyz(args.infile)
 
     # make topology
+    # "ext xplor" format required, because atom types may be longer than 4 chars!
     GeometryAnalyzer(geometry).structure().to_psf(args.output, flags=['EXT', 'XPLOR'])
 
 

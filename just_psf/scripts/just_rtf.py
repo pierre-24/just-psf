@@ -1,6 +1,6 @@
 """
 "Just get me a topology, for god’s sake!"
-Create a Residue Topology File (RTF), based on the distance matrix.
+Create a Residue Topology(ies) File (RTF), based on the distance matrix.
 """
 
 import argparse
@@ -21,7 +21,7 @@ def main():
     geometry = Geometry.from_xyz(args.infile)
 
     # make topology
-    GeometryAnalyzer(geometry).topology().to_rtop(args.output)
+    GeometryAnalyzer(geometry).topologies().to_rtop(args.output)
 
 
 if __name__ == '__main__':
