@@ -41,13 +41,13 @@ class PDBParser(LineParser):
                 if len(li) < 78:
                     raise PDBParseError(self.current_token, 'len(line) < 78')
 
-                serial, atype, resi_name, seg_name, res_id, x, y, z, symbol = (
+                serial, atype, resi_name, seg_name, resi_id, x, y, z, symbol = (
                     li[6:11].strip(),  # serial
-                    li[12:16].strip(),  # name
+                    li[12:16].strip(),  # name (atom_type)
                     # li[16].strip(),  # altloc
-                    li[17:21].strip(),  # resname
-                    li[21].strip(),  # chainid
-                    li[22:26].strip(),  # resseq
+                    li[17:21].strip(),  # resname (resi_name)
+                    li[21].strip(),  # chainid (seg_name)
+                    li[22:26].strip(),  # resseq  (resi_id)
                     # li[26],  # icode
                     li[30:38].strip(),  # x
                     li[38:46].strip(),  # y
@@ -66,7 +66,7 @@ class PDBParser(LineParser):
                     raise PDBParseError(self.current_token, 'empty coordinates')
 
                 seg_names.append(seg_name)
-                resi_ids.append(int(res_id))
+                resi_ids.append(int(resi_id))
                 resi_names.append(resi_name)
                 atom_types.append(atype)
                 symbols.append(symbol)
@@ -76,6 +76,8 @@ class PDBParser(LineParser):
                 self.next()  # skip that line
 
             self.next_non_empty()
+
+        l_logger.debug('Found and parsed {} ATOM/HETATM'.format(len(symbols)))
 
         if not self.current_token.value == 'END':
             raise PDBParseError(self.current_token, 'expected `END`')
