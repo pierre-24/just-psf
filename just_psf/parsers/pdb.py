@@ -25,7 +25,7 @@ class PDBParser(LineParser):
         seg_names = []
         resi_ids = []
         resi_names = []
-        atom_types = []
+        atom_names = []
         positions = []
         symbols = []
 
@@ -41,7 +41,7 @@ class PDBParser(LineParser):
                 if len(li) < 78:
                     raise PDBParseError(self.current_token, 'len(line) < 78')
 
-                serial, atype, resi_name, seg_name, resi_id, x, y, z, symbol = (
+                serial, aname, resi_name, seg_name, resi_id, x, y, z, symbol = (
                     li[6:11].strip(),  # serial
                     li[12:16].strip(),  # name (atom_type)
                     # li[16].strip(),  # altloc
@@ -68,7 +68,7 @@ class PDBParser(LineParser):
                 seg_names.append(seg_name)
                 resi_ids.append(int(resi_id))
                 resi_names.append(resi_name)
-                atom_types.append(atype)
+                atom_names.append(aname)
                 symbols.append(symbol)
                 positions.append(tuple(float(n) for n in [x, y, z]))
 
@@ -92,5 +92,5 @@ class PDBParser(LineParser):
             seg_names=seg_names,
             resi_ids=resi_ids,
             resi_names=resi_names,
-            atom_types=atom_types
+            atom_names=atom_names
         )

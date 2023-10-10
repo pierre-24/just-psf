@@ -67,19 +67,19 @@ class PDBGeometry(Geometry):
         seg_names: Optional[List[str]] = None,
         resi_ids: Optional[List[int]] = None,
         resi_names: Optional[list[str]] = None,
-        atom_types: Optional[List[str]] = None,
+        atom_names: Optional[List[str]] = None,
     ):
         super().__init__(symbols, positions)
 
         assert seg_names is None or len(seg_names) == len(symbols)
         assert resi_ids is None or len(resi_ids) == len(symbols)
         assert resi_names is None or len(resi_names) == len(symbols)
-        assert atom_types is None or len(atom_types) == len(symbols)
+        assert atom_names is None or len(atom_names) == len(symbols)
 
         self.seg_names = seg_names
         self.resi_ids = resi_ids
         self.resi_names = resi_names
-        self.atom_types = atom_types
+        self.atom_names = atom_names
 
     @classmethod
     def from_pdb(cls, f: TextIO) -> 'PDBGeometry':
@@ -105,7 +105,7 @@ class PDBGeometry(Geometry):
 
         # format adapted from https://docs.mdanalysis.org/stable/documentation_pages/coordinates/PDB.html
         fmt = \
-            '{kw:6}{serial:5d} {atype:<4s}{alt_loc:<1s}{res_name:<4s}' \
+            '{kw:6}{serial:5d} {aname:<4s}{alt_loc:<1s}{res_name:<4s}' \
             '{seg_name:1s}{resi_id:4d}{icode:1s}'\
             '   {pos[0]:8.3f}{pos[1]:8.3f}{pos[2]:8.3f}{occupancy:6.2f}'\
             '{temp_factor:6.2f}      {seg_id:<4s}{element:>2s}{charge:2s}\n'
@@ -114,7 +114,7 @@ class PDBGeometry(Geometry):
             r += fmt.format(
                 kw='HETATM',
                 serial=i + 1,
-                atype=self.atom_types[i] if self.atom_types is not None else self.symbols[i],
+                aname=self.atom_names[i],
                 alt_loc=alt_loc[i] if alt_loc is not None else '',
                 res_name=self.resi_names[i] if self.resi_names is not None else 'X',
                 seg_name=self.seg_names[i] if self.seg_names is not None else '',

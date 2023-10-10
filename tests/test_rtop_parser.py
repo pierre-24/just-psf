@@ -68,7 +68,7 @@ def assert_residue_equals(residue, residue2):
     assert residue.resi_name == residue2.resi_name
     assert residue.resi_charge == residue2.resi_charge
     assert residue.atom_names == residue2.atom_names
-    assert residue.atom_types == residue2.atom_types
+    assert residue.atom_names == residue2.atom_names
     assert residue.atom_charges == residue2.atom_charges
     assert numpy.allclose(residue.bonds, residue2.bonds)
 

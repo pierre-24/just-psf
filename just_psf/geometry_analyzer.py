@@ -450,5 +450,5 @@ class GeometryAnalyzer:
             positions=self.geometry.positions,
             resi_ids=self.resi_ids,
             resi_names=resi_names,
-            atom_types=self.geometry.symbols,
+            atom_names=self.atom_names,
         )
