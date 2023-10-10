@@ -7,7 +7,7 @@ from typing import Iterable
 import queue
 
 from just_psf import logger
-from just_psf.geometry import Geometry
+from just_psf.geometry import Geometry, PDBGeometry
 from just_psf.residue_topology import Topologies, ResidueTopology
 from just_psf.structure import Structure
 
@@ -434,4 +434,21 @@ class GeometryAnalyzer:
             autogenerate={('ANGLE', 'DIHE')},
             defaults={('FIRST', 'NONE'), ('LAST', 'NONE')},
             residues=residues,
+        )
+
+    def pdb(self) -> PDBGeometry:
+        resi_names = ['X'] * len(self.geometry)
+
+        # assign resi name
+        for i, component in enumerate(self.uniq_residues):
+            for mp in self.resi_isomorphic_to[i]:
+                for ai in mp.values():
+                    resi_names[ai] = 'RES{}'.format(i + 1)
+
+        return PDBGeometry(
+            symbols=self.geometry.symbols,
+            positions=self.geometry.positions,
+            resi_ids=self.resi_ids,
+            resi_names=resi_names,
+            atom_types=self.geometry.symbols,
         )

@@ -79,3 +79,13 @@ def test_structure_make_7waters_ok(geometry_7waters, structure_7water_psf):
     assert auto_structure.resi_names == structure_7water_psf.resi_names
     assert numpy.allclose(auto_structure.bonds, structure_7water_psf.bonds)
     assert numpy.allclose(auto_structure.angles, structure_7water_psf.angles)
+
+
+def test_pdb_make_7waters_ok(geometry_7waters, geometry_7waters_pdb):
+    maker = GeometryAnalyzer(geometry_7waters)
+    auto_pdb = maker.pdb()
+
+    assert set(auto_pdb.resi_names) == {'RES1'}  # all residues correspond to one
+    assert geometry_7waters_pdb.resi_ids == auto_pdb.resi_ids
+    assert geometry_7waters_pdb.symbols == auto_pdb.symbols
+    assert numpy.allclose(auto_pdb.positions, geometry_7waters_pdb.positions, atol=1e-3)

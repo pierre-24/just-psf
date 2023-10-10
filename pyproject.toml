@@ -48,6 +48,7 @@ dev = [
 "Source" = "https://github.com/pierre-24/just-psf/"
 
 [project.scripts]
+'just-pdb' = 'just_psf.scripts.just_pdb:main'
 'just-psf' = 'just_psf.scripts.just_psf:main'
 'just-rtf' = 'just_psf.scripts.just_rtf:main'
 
