@@ -60,6 +60,9 @@ When you are happy, use [`psfgen`](https://www.ks.uiuc.edu/Research/vmd/plugins/
 # load topology
 topology 7H2O.rtf
 
+# use aliases if any
+pdbalias residue RES1 HOH 
+
 # load PDB
 segment X { pdb 7H2O.pdb }
 
